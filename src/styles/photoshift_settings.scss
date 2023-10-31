@@ -1,0 +1,70 @@
+/**
+ * src/styles/settings.scss
+ *
+ * Configures SASS variables and Vuetify overwrites
+ */
+
+// https://next.vuetifyjs.com/features/sass-variables/`
+// @use 'vuetify' with (
+//   $color-pack: false
+// )
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;700&display=swap');
+
+$body-font-family: 'HelveticaNeue,Helvetica Neue,helvetica,Sans-Serif';
+$title-font: 'HelveticaNeue,Helvetica Neue,helvetica,Sans-Serif';
+$font-family:'HelveticaNeue,Helvetica Neue,helvetica,Sans-Serif';
+
+.v-application {
+  [class*='text-'] {
+    font-family: HelveticaNeue,Helvetica Neue,helvetica,Sans-Serif !important;
+  }
+  font-family: HelveticaNeue,Helvetica Neue,helvetica,Sans-Serif !important;
+}
+.v-btn {
+  text-transform: none;
+}
+.datetime {
+  font-family: Arial, Helvetica, sans-serif;
+}
+html {
+  overflow: overlay;
+  font-size: 14px;
+}
+
+.vjs_video_3-dimensions {
+  width: 100% !important;
+  height: 100% !important;
+  video {
+    width: 100% !important;
+    height: 100% !important;
+    position: relative !important;
+    object-fit: cover;
+  }
+}
+*::-webkit-scrollbar {
+  background-color: #fff;
+  width: 16px;
+  // width: 5px;
+  display: none;
+}
+textarea::-webkit-scrollbar {
+  display: unset !important;
+}
+
+/* background of the scrollbar except button or resizer */
+*::-webkit-scrollbar-track {
+  background-color: #fff;
+}
+
+/* scrollbar itself */
+*::-webkit-scrollbar-thumb {
+  // display: none;
+  background-color: #babac0;
+  border-radius: 16px;
+  border: 4px solid #fff;
+}
+
+/* set button(top and bottom of the scrollbar) */
+*::-webkit-scrollbar-button {
+  display:none;
+}
