@@ -1,4 +1,4 @@
-name: Deploy to Stage
+name: Deploy to saquib-alam-md
 
 on:
   push:
@@ -12,8 +12,6 @@ env:
   VITE_APP_NAME       : zust
   mode                : development
   VITE_ENV            : production
-  VITE_SUPABASE_URL   : https://bptbjokqupygylkbmspj.supabase.co
-  VITE_SUPABASE_KEY   : eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwdGJqb2txdXB5Z3lsa2Jtc3BqIiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTAyMjMyMjQsImV4cCI6MjAwNTc5OTIyNH0.jsYmzxC2cLAchXYJbyChACFjQx_rn4IsGfpJUjxTR2w
 
 jobs:
   deploy_stage:

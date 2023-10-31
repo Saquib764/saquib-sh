@@ -1,63 +1,7 @@
 {
   "hosting": [{
     "public": ".output/public",
-    "site": "fashion-prod",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ]
-  }, {
-    "public": ".output/public",
-    "site": "fashion-zust",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ]
-  }, {
-    "public": ".output/public",
-    "site": "photoshift",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ]
-  }, {
-    "public": ".output/public",
-    "site": "stage-photoshift",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ]
-  }, {
-    "public": ".output/public",
-    "site": "qr-zust-ai",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ]
-  }, {
-    "public": ".output/public",
-    "site": "app-zust-ai",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ]
-  }, {
-    "public": ".output/public",
-    "site": "dev-zust-ai",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ]
-  }, {
-    "public": ".output/public",
-    "site": "stage-zust-ai",
+    "site": "saquib-alam-md",
     "ignore": [
       "firebase.json",
       "**/.*",
