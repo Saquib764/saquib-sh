@@ -11,6 +11,7 @@
       <a href="https://instagram.com/saquiboye" target="_blank"><img src="https://img.shields.io/badge/-saquiboye-%23E4405F?style=flat-square&logo=Instagram&logoColor=white" /></a>
       <a href="https://www.linkedin.com/in/saquiboye" target="_blank"><img src="https://img.shields.io/badge/-saquiboye-blue?style=flat-square&logo=Linkedin&logoColor=white" /></a>
     </div>
+    <p>My start-up is  and it is in early revenue phase, looking to grow quickly. I usually share my start-up journey on Twitter.</p>
   </div>
 </template>
 
