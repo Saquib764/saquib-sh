@@ -21,6 +21,7 @@
       <v-text-field v-model="idea.topic" label="Topic" placeholder="eg.- product photographer, social media expert" outlined />
       <v-text-field v-model="idea.description" label="Description" placeholder="eg.- how to use AI in product photography" outlined/>
       <v-btn :loading="states.isLoading" @click="createOutline" color="black">Create outline</v-btn>
+      <span>You can generate multiple outlines</span>
     </div>
     <client-only>
       <div v-show="states.state >= APP_STATE.OUTLINE" class="mt-6 pt-6">
@@ -40,7 +41,7 @@
                     @click="states.isExpanded = !states.isExpanded"
                     width="200px"
                     color="black"
-                    :append-icon="states.isExpanded?'mdi-arrow-collapse-all':'mdi-arrow-expand-all'">{{states.isExpanded?'heading only':'show paragraph'}}</v-btn>
+                    :append-icon="states.isExpanded?'mdi-arrow-collapse-all':'mdi-arrow-expand-all'">{{states.isExpanded?'collapse section':'expand sections'}}</v-btn>
                   <v-btn
                     width="200px"
                     color="black"
@@ -68,6 +69,7 @@
                 </div>
 
                 <h2 class="mt-6 mb-2">{{ outline.title || '<No title>' }}</h2>
+                <h2 class="mt-6 mb-2">{{ outline.metadescription || '<No metadata>' }}</h2>
                 <v-list style="gap: 20px;" variant="outlined">
                   <v-list-item v-for="(item, index) in outline.data" :key="index">
                       <v-list-item-title>
