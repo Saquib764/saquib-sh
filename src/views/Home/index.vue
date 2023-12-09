@@ -11,7 +11,12 @@
       <a href="https://instagram.com/saquiboye" target="_blank"><img src="https://img.shields.io/badge/-saquiboye-%23E4405F?style=flat-square&logo=Instagram&logoColor=white" /></a>
       <a href="https://www.linkedin.com/in/saquiboye" target="_blank"><img src="https://img.shields.io/badge/-saquiboye-blue?style=flat-square&logo=Linkedin&logoColor=white" /></a>
     </div>
-    <p>My start-up is  and it is in early revenue phase, looking to grow quickly. I usually share my start-up journey on Twitter.</p>
+    <p>My start-up is in early revenue phase, looking forward to grow quickly. I usually share my start-up journey on Twitter.</p>
+
+    <h1 class="mt-6">Tools</h1>
+    <div>
+      <a href="/tools/ai-blog-writer" target="_blank">Free AI blog writer, step-by-step</a>
+    </div>
   </div>
 </template>
 
