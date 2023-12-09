@@ -20,7 +20,7 @@
     <div v-show="states.state >= APP_STATE.IDEA">
       <v-text-field v-model="idea.topic" label="Topic" placeholder="eg.- product photographer, social media expert" outlined />
       <v-text-field v-model="idea.description" label="Description" placeholder="eg.- how to use AI in product photography" outlined/>
-      <v-btn :loading="idea.isLoading" @click="createOutline" color="black">Create outline</v-btn>
+      <v-btn :loading="states.isLoading" @click="createOutline" color="black">Create outline</v-btn>
     </div>
     <client-only>
       <div v-show="states.state >= APP_STATE.OUTLINE" class="mt-6 pt-6">
@@ -47,7 +47,7 @@
                     :loading="states.isGenerating" @click="generateAllParagraph(outline)"
                     append-icon="mdi-creation">generate all</v-btn>
                 </div>
-                <div style="display: flex; gap: 10px; flex-direction: row;">
+                <div style="display: flex; gap: 10px; flex-direction: row; margin-top: 10px;">
                   <v-btn
                     width="200px"
                     color="black"
@@ -168,6 +168,7 @@ const states = reactive({
   state: APP_STATE.IDEA,
   tab: 0,
   isExpanded: false,
+  isLoading: false,
   isGenerating: false,
   isGeneratingTitle: false,
   isGeneratingMeta: false,
@@ -181,7 +182,6 @@ const states = reactive({
 const idea = reactive({
   topic: '',
   description: '',
-  isLoading: false,
   outlines: []
 })
 
@@ -196,6 +196,7 @@ watch(()=>idea, (val)=>{
 }, {deep: true})
 
 async function createOutline() {
+  states.isLoading = true
   let res = await fetch(`${BASE_API}/openai/generic`, {
     method: 'POST',
     headers: {
@@ -224,6 +225,7 @@ async function createOutline() {
     data: _outlines
   }]
   states.state = APP_STATE.OUTLINE
+  states.isLoading = false
 }
 function deleteOutline(i) {
   idea.outlines.splice(i, 1)
