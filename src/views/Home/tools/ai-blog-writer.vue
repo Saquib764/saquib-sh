@@ -17,12 +17,12 @@
         <li>Click on "Preview" button to preview the blog.</li>
       </ol>
     </div>
+    <div v-show="states.state >= APP_STATE.IDEA">
+      <v-text-field v-model="idea.topic" label="Topic" placeholder="eg.- product photographer, social media expert" outlined />
+      <v-text-field v-model="idea.description" label="Description" placeholder="eg.- how to use AI in product photography" outlined/>
+      <v-btn :loading="idea.isLoading" @click="createOutline" color="black">Create outline</v-btn>
+    </div>
     <client-only>
-      <div v-show="states.state >= APP_STATE.IDEA">
-        <v-text-field v-model="idea.topic" label="Topic" placeholder="eg.- product photographer, social media expert" outlined />
-        <v-text-field v-model="idea.description" label="Description" placeholder="eg.- how to use AI in product photography" outlined/>
-        <v-btn :loading="idea.isLoading" @click="createOutline" color="black">Create outline</v-btn>
-      </div>
       <div v-show="states.state >= APP_STATE.OUTLINE" class="mt-6 pt-6">
         <h2>Suggested outlines</h2>
         <v-card>
