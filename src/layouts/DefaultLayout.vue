@@ -3,7 +3,6 @@
     <!-- <app-bar :elevation="0"/> -->
     <default-view />
 
-    <custom-footer />
     <footer :class="`font-weight-medium ${isMobile()?'mobile':''} text-subtitle`">
       <!-- <div>Made with <span>❤️</span> in India </div> -->
       <div>Saquib</div>
