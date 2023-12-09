@@ -46,6 +46,8 @@
                     color="black"
                     :loading="states.isGenerating" @click="generateAllParagraph(outline)"
                     append-icon="mdi-creation">generate all</v-btn>
+                </div>
+                <div style="display: flex; gap: 10px; flex-direction: row;">
                   <v-btn
                     width="200px"
                     color="black"
