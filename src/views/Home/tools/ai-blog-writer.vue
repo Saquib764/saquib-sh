@@ -18,10 +18,11 @@
       </ol>
     </div>
     <div v-show="states.state >= APP_STATE.IDEA">
-      <v-text-field v-model="idea.topic" label="Topic" placeholder="eg.- product photographer, social media expert" outlined />
+      <v-text-field v-model="idea.topic" label="AI expertise" placeholder="eg.- product photographer, social media expert" outlined />
       <v-text-field v-model="idea.description" label="Description" placeholder="eg.- how to use AI in product photography" outlined/>
+      <v-text-field v-model="idea.word_count" label="Word count" placeholder="eg.- how to use AI in product photography" outlined/>
       <v-btn :loading="states.isLoading" @click="createOutline" color="black">Create outline</v-btn>
-      <span>You can generate multiple outlines</span>
+      <span class="ml-2">You can generate multiple outlines</span>
     </div>
     <client-only>
       <div v-show="states.state >= APP_STATE.OUTLINE" class="mt-6 pt-6">
@@ -69,13 +70,13 @@
                 </div>
 
                 <h2 class="mt-6 mb-2">{{ outline.title || '<No title>' }}</h2>
-                <h2 class="mt-6 mb-2">{{ outline.metadescription || '<No metadata>' }}</h2>
+                <span class="mt-6 mb-2">{{ outline.metadescription || '<No metadata>' }}</span>
                 <v-list style="gap: 20px;" variant="outlined">
                   <v-list-item v-for="(item, index) in outline.data" :key="index">
                       <v-list-item-title>
                         <tagsarea class="tagsarea" v-model="item.heading" placeholder="Heading" />
                       </v-list-item-title>
-                      <tagsarea class="tagsarea" v-model="item.description" placeholder="Description" />
+                      <tagsarea class="tagsarea" v-model="item.instruction" placeholder="Instruction" />
                       <tagsarea v-show="states.isExpanded" class="tagsarea" v-model="item.knowledgeBase" placeholder="Knowledge base - mention the things that you would like to include" />
                       <tagsarea v-show="states.isExpanded" class="tagsarea" style="min-height: 100px;" v-model="item.paragraph" placeholder="Paragraph - write the paragraph" />
                       <template v-slot:append>
@@ -92,7 +93,7 @@
                         <v-btn
                           icon="mdi-plus"
                           variant="text"
-                          @click="outline.data.splice(index+1, 0, {heading: '', description: '', knowledgeBase: '', paragraph: ''})"
+                          @click="outline.data.splice(index+1, 0, {heading: '', instruction: '', word_count: 100, knowledgeBase: '', paragraph: ''})"
                         ></v-btn>
                       </template>
                   </v-list-item>
@@ -184,6 +185,7 @@ const states = reactive({
 const idea = reactive({
   topic: '',
   description: '',
+  word_count: 1000,
   outlines: []
 })
 
@@ -205,8 +207,8 @@ async function createOutline() {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      system: `You are SEO friendly blog writer and an expert in ${idea.topic}. You are writing a blog about ${idea.description}. Blog should be SEO friendly. Always create response as an array of objects.`,
-      instruction: `Create an outline for the blog. Each outline is a object with keys- heading and description. The heading should be 5-9 words long and description should be 15 words long. The response should be an array of object.`,
+      system: `You are SEO friendly blog writer and an expert in ${idea.topic}. You are writing a blog about ${idea.instruction}. Total length of the blog is about ${idea.word_count} words. Blog should be SEO friendly, and content should not be repetitive. Always create response as an array of objects.`,
+      instruction: `Create an outline for the blog. Each outline is a object with keys- heading, instruction, and word_count. The heading should be 5-9 words long and instruction should be 15 words long. The response should be an array of object.`,
     })
   })
   let data = await res.json()
@@ -217,7 +219,8 @@ async function createOutline() {
   const _outlines = JSON.parse(json).map((item)=>{
     return {
       heading: item.heading,
-      description: item.description,
+      instruction: item.instruction,
+      word_count: item.word_count.toString(),
       knowledgeBase: "",
       paragraph: ""
     }
@@ -242,9 +245,9 @@ async function generateParagraph(item) {
     },
     body: JSON.stringify({
       system: `You are blog writer and an expert in ${idea.topic}. You are writing a blog about ${idea.description}. Blog should be SEO friendly.`,
-      instruction: `Create a paragraph for a section in the blog with the given a subtitle and a description. Use the knowledge base to write the paragraph. The response should be a string.
+      instruction: `Create a paragraph for a section in the blog with the given a subtitle and instruction. Use the knowledge base to write the paragraph. Total length should be about ${item.word_count} The response should be a string.
       Subtitle: ${item.heading}
-      Description: ${item.description}
+      Instruction: ${item.instruction}
       Knowledge base: ${item.knowledgeBase}
       
       Response should be only paragraph.`,
@@ -277,7 +280,7 @@ async function createTitle(outline) {
     },
     body: JSON.stringify({
       system: `You are blog writer and an expert in ${idea.topic}. You are writing a blog about ${idea.description}.`,
-      instruction: `Create a creative title for the blog. The blog has the following outlines:\n${outline.data.map((o, i)=>`${i+1}. ${o.heading} - ${o.description}`).join('\n')}. ${title_instruction}`,
+      instruction: `Create a creative title for the blog. The blog has the following outlines:\n${outline.data.map((o, i)=>`${i+1}. ${o.heading}`).join('\n')}. ${title_instruction}`,
     })
   })
   let data = await res.json()
@@ -294,7 +297,7 @@ async function createMetadescription(outline) {
     },
     body: JSON.stringify({
       system: `You are SEO expert and blog writer and an expert in ${idea.topic}. You are writing a blog about ${idea.description}.`,
-      instruction: `Create a creative title for the blog. The blog has the following outlines:\n${outline.data.map((o, i)=>`${i+1}. ${o.heading} - ${o.description}`).join('\n')}. Keep it less than 150 characters, it should be SEO friendly and catchy.`,
+      instruction: `Create a creative title for the blog. The blog has the following outlines:\n${outline.data.map((o, i)=>`${i+1}. ${o.heading}`).join('\n')}. Keep it less than 150 characters, it should be SEO friendly and catchy.`,
     })
   })
   let data = await res.json()
