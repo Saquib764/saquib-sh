@@ -138,6 +138,29 @@ const APP_STATE = {
   IDEA: 0,
   OUTLINE: 1,
 }
+definePageMeta({
+  layout: "default-layout",
+});
+
+useHead({
+  title: "Free AI blog writer - saquib alam",
+  meta: [{
+    name: "description",
+    content: "use GPT-3.5-turbo to help you write a blog blog step-by-step, and then iterate over each paragraph by guiding the AI through your custom knowledge."
+  }]
+})
+
+useSeoMeta({
+  title: "Free AI blog writer - saquib alam",
+  ogTitle: "Free AI blog writer - saquib alam",
+  description: "use GPT-3.5-turbo to help you write a blog blog step-by-step, and then iterate over each paragraph by guiding the AI through your custom knowledge.",
+  ogDescription: "use GPT-3.5-turbo to help you write a blog blog step-by-step, and then iterate over each paragraph by guiding the AI through your custom knowledge.",
+  // image: "https://qr.zust.ai/images/qr-code.jpg",
+  // ogImage: 'https://qr.zust.ai/images/qr-code.jpg',
+  // twitterCard: 'summary_large_image',
+})
+
+
 
 const states = reactive({
   state: APP_STATE.IDEA,
@@ -160,7 +183,6 @@ const idea = reactive({
   outlines: []
 })
 
-console.log('idea', JSON.parse(localStorage.getItem('a-writer-idea') || '{}'))
 Object.assign(idea, JSON.parse(localStorage.getItem('a-writer-idea') || '{}'))
 
 if(idea.outlines.length > 0) {
