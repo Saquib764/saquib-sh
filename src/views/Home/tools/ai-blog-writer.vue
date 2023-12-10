@@ -297,7 +297,7 @@ async function createMetadescription(outline) {
     },
     body: JSON.stringify({
       system: `You are SEO expert and blog writer and an expert in ${idea.topic}. You are writing a blog about ${idea.description}.`,
-      instruction: `Create a creative title for the blog. The blog has the following outlines:\n${outline.data.map((o, i)=>`${i+1}. ${o.heading}`).join('\n')}. Keep it less than 150 characters, it should be SEO friendly and catchy.`,
+      instruction: `Create a creative title for the blog. The blog has the following outlines:\n${outline.data.map((o, i)=>`${i+1}. ${o.heading}`).join('\n')}. Keep it about 150 characters, it should be SEO friendly and catchy.`,
     })
   })
   let data = await res.json()
