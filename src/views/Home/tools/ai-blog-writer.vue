@@ -183,14 +183,15 @@ const states = reactive({
   }
 })
 
+
+const init = JSON.parse(localStorage.getItem('a-writer-idea') || '{}')
 const idea = reactive({
-  topic: '',
-  description: '',
-  word_count: 1000,
-  outlines: []
+  topic: init.topic || '',
+  description: init.description || '',
+  word_count: init.word_count || 1000,
+  outlines: init.outlines || [],
 })
 
-Object.assign(idea, JSON.parse(localStorage.getItem('a-writer-idea') || '{}'))
 
 if(idea.outlines.length > 0) {
   states.state = APP_STATE.OUTLINE
