@@ -83,6 +83,7 @@
                         <v-btn
                           icon="mdi-creation"
                           variant="text"
+                          :loading="item.isGenerating"
                           @click="generateParagraph(item)"
                         ></v-btn>
                         <v-btn
@@ -238,6 +239,7 @@ function deleteOutline(i) {
 }
 async function generateParagraph(item) {
   states.isGenerating = true
+  item.isGenerating = true
   let res = await fetch(`${BASE_API}/openai/generic`, {
     method: 'POST',
     headers: {
@@ -257,6 +259,7 @@ async function generateParagraph(item) {
   console.log(data)
   item.paragraph = data.result
   states.isGenerating = false
+  item.isGenerating = false
 }
 
 async function generateAllParagraph(outline) {
