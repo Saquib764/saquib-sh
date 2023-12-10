@@ -78,7 +78,7 @@
                       </v-list-item-title>
                       <tagsarea class="tagsarea" v-model="item.instruction" placeholder="Instruction" />
                       <tagsarea v-show="states.isExpanded" class="tagsarea" v-model="item.knowledgeBase" placeholder="Knowledge base - mention the things that you would like to include" />
-                      <tagsarea v-show="states.isExpanded" class="tagsarea" style="min-height: 100px;" v-model="item.paragraph" placeholder="Paragraph - write the paragraph" />
+                      <v-textarea v-show="states.isExpanded" class="tagsarea" style="min-height: 100px;" v-model="item.paragraph" placeholder="Paragraph - write the paragraph" />
                       <template v-slot:append>
                         <v-btn
                           icon="mdi-creation"
