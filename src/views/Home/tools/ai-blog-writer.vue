@@ -122,7 +122,7 @@
           <v-card-text style="overflow: scroll; font-size: 1.2em; line-height: 1.5em;">
             <div v-for="section, i in states.preview.data" :key="i">
               <h4 class="mt-6 mb-2">{{ section.heading }}</h4>
-              <div v-html="section.paragraph"></div>
+              <div style="white-space: pre-line;">{{ section.paragraph }}</div>
             </div>
             <div style="margin-bottom: 100px;"></div>
           </v-card-text>
