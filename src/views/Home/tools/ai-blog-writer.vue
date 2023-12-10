@@ -207,7 +207,7 @@ async function createOutline() {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      system: `You are SEO friendly blog writer and an expert in ${idea.topic}. You are writing a blog about ${idea.instruction}. Total length of the blog is about ${idea.word_count} words. Blog should be SEO friendly, and content should not be repetitive. Always create response as an array of objects.`,
+      system: `You are SEO friendly blog writer and an expert in ${idea.topic}. You are writing a blog about ${idea.instruction}. Total length of the blog is about ${idea.word_count} words. Blog should be SEO friendly, and content should not be repetitive. Always create response as an array of objects. Use lists when required.`,
       instruction: `Create an outline for the blog. Each outline is a object with keys- heading, instruction, and word_count. The heading should be 5-9 words long and instruction should be 15 words long. The response should be an array of object.`,
     })
   })
@@ -245,7 +245,7 @@ async function generateParagraph(item) {
     },
     body: JSON.stringify({
       system: `You are blog writer and an expert in ${idea.topic}. You are writing a blog about ${idea.description}. Blog should be SEO friendly.`,
-      instruction: `Create a paragraph for a section in the blog with the given a subtitle and instruction. Use the knowledge base to write the paragraph. Total length should be about ${item.word_count} The response should be a string.
+      instruction: `Create a paragraph for a section in the blog with the given a subtitle and instruction. Use the knowledge base to write the paragraph. Total length should be about ${item.word_count}. Use lists when required.
       Subtitle: ${item.heading}
       Instruction: ${item.instruction}
       Knowledge base: ${item.knowledgeBase}
@@ -297,7 +297,7 @@ async function createMetadescription(outline) {
     },
     body: JSON.stringify({
       system: `You are SEO expert and blog writer and an expert in ${idea.topic}. You are writing a blog about ${idea.description}.`,
-      instruction: `Create a creative title for the blog. The blog has the following outlines:\n${outline.data.map((o, i)=>`${i+1}. ${o.heading}`).join('\n')}. Keep it about 150 characters, it should be SEO friendly and catchy.`,
+      instruction: `Create a creative title for the blog. The blog has the following outlines:\n${outline.data.map((o, i)=>`${i+1}. ${o.heading}`).join('\n')}. Length should be around 150 characters, it should be SEO friendly and catchy.`,
     })
   })
   let data = await res.json()
