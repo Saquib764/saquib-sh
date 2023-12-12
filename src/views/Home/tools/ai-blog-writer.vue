@@ -18,9 +18,9 @@
       </ol>
     </div>
     <div v-show="states.state >= APP_STATE.IDEA">
-      <v-text-field v-model="idea.topic" label="AI expertise" placeholder="eg.- product photographer, social media expert" outlined />
-      <v-text-field v-model="idea.description" label="Description" placeholder="eg.- how to use AI in product photography" outlined/>
-      <v-text-field v-model="idea.word_count" label="Word count" placeholder="eg.- how to use AI in product photography" outlined/>
+      <v-text-field v-model="idea.topic" label="Topic" placeholder="eg.- how to use AI in product photography" outlined />
+      <v-textarea v-model="idea.description" label="Description" placeholder="Describe details that you would want to include. eg. - types of product photography, lighting techniques, lighting and shadows" outlined/>
+      <v-text-field v-model="idea.word_count" label="Word count" placeholder="3000" outlined/>
       <v-btn :loading="states.isLoading" @click="createOutline" color="black">Create outline</v-btn>
       <span class="ml-2">You can generate multiple outlines</span>
     </div>
@@ -209,7 +209,8 @@ async function createOutline() {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      system: `You are SEO friendly blog writer and an expert in ${idea.topic}. You are writing a blog about ${idea.instruction}. Total length of the blog is about ${idea.word_count} words. Blog should be SEO friendly, and content should not be repetitive. Always create response as an array of objects. Use lists when required.`,
+      system: `You are SEO friendly blog writer. You are writing a blog about ${idea.topic}. Total length of the blog is about ${idea.word_count} words. Use this information to write the blog - ${idea.description}.
+      Blog content should not be repetitive. Always create response as an array of objects. Use lists when required.`,
       instruction: `Create an outline for the blog. Each outline is a object with keys- heading, instruction, and word_count. The heading should be 5-9 words long and instruction should be 15 words long. The response should be an array of object.`,
     })
   })
@@ -247,7 +248,7 @@ async function generateParagraph(item) {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      system: `You are blog writer and an expert in ${idea.topic}. You are writing a blog about ${idea.description}. Blog should be SEO friendly.`,
+      system: `You are blog writer. You are writing a blog about ${idea.topic}. Blog should be SEO friendly.`,
       instruction: `Create a paragraph for a section in the blog with the given a subtitle and instruction. Use the knowledge base to write the paragraph. Total length should be about ${item.word_count}. Use lists when required.
       Subtitle: ${item.heading}
       Instruction: ${item.instruction}
