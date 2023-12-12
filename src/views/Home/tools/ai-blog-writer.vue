@@ -1,6 +1,6 @@
 <template>
   <div class="ai-writer">
-    <h1>Free AI blog writer - by <a href="/">Saquib</a></h1>
+    <h1>Free AI blog writer</h1>
     <div class="mt-6">This app uses GPT-3.5-turbo to help you write a blog blog step-by-step, and then iterate over each paragraph by guiding the AI through your custom knowledge.</div>
 
     <div class="mb-6 mt-1">
@@ -145,7 +145,7 @@ const APP_STATE = {
   OUTLINE: 1,
 }
 definePageMeta({
-  layout: "default-layout",
+  layout: "app-layout",
 });
 
 useHead({
@@ -227,10 +227,10 @@ async function createOutline() {
       paragraph: ""
     }
   })
-  idea.outlines = [...idea.outlines, {
+  idea.outlines = [{
     title: '',
     data: _outlines
-  }]
+  }, ...idea.outlines]
   states.state = APP_STATE.OUTLINE
   states.isLoading = false
 }
@@ -301,7 +301,7 @@ async function createMetadescription(outline) {
     },
     body: JSON.stringify({
       system: `You are SEO expert and blog writer and an expert in ${idea.topic}. You are writing a blog about ${idea.description}.`,
-      instruction: `Create a creative title for the blog. The blog has the following outlines:\n${outline.data.map((o, i)=>`${i+1}. ${o.heading}`).join('\n')}. Length should be around 150 characters, it should be SEO friendly and catchy.`,
+      instruction: `Create a SEO friendly description of the blog, for meta description. The blog has the following outlines:\n${outline.data.map((o, i)=>`${i+1}. ${o.heading}`).join('\n')}. Length should be around 150 characters, it should be SEO friendly and catchy.`,
     })
   })
   let data = await res.json()
