@@ -17,6 +17,7 @@
         <li>Click on "Preview" button to preview the blog.</li>
       </ol>
     </div>
+    <connect />
     <div v-show="states.state >= APP_STATE.IDEA">
       <v-text-field v-model="idea.topic" label="Topic" placeholder="eg.- how to use AI in product photography" outlined />
       <v-textarea v-model="idea.description" label="Description" placeholder="Describe details that you would want to include. eg. - types of product photography, lighting techniques, lighting and shadows" outlined/>
@@ -137,6 +138,7 @@
 import { ref, watch, reactive, onMounted, onBeforeUnmount, onBeforeMount } from 'vue'
 import {localStorageCopy as localStorage} from '@/utils/common.js'
 import Tagsarea from '@/components/Tagsarea.vue'
+import Connect from '@/components/Footers/Connect.vue'
 
 const BASE_API = 'https://stage-zust-ai-be-5ipjkdoeba-uc.a.run.app'
 
