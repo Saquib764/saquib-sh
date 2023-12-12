@@ -13,7 +13,7 @@
 <script setup>
 import { ref, watch, reactive, onMounted, computed } from 'vue'
 import {useStore} from 'vuex'
-import AppBar from './ZustAppBar.vue'
+import AppBar from './AppBar.vue'
 import DefaultView from './View.vue'
 
 const store = useStore()
