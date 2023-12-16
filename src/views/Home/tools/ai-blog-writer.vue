@@ -101,7 +101,6 @@
                   </v-list-item>
                 </v-list>
               </v-window-item>
-
             </v-window>
           </v-card-text>
         </v-card>
@@ -140,7 +139,7 @@ import {localStorageCopy as localStorage} from '@/utils/common.js'
 import Tagsarea from '@/components/Tagsarea.vue'
 import Connect from '@/components/Footers/Connect.vue'
 
-const BASE_API = 'https://stage-zust-ai-be-5ipjkdoeba-uc.a.run.app'
+const BASE_API = 'https://get-published-nf5wy45qga-uc.a.run.app'
 
 const APP_STATE = {
   IDEA: 0,

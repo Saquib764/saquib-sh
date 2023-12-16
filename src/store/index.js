@@ -2,7 +2,7 @@ import { Store } from "vuex"
 import VuexPersist from 'vuex-persist'
 // import cropEditor from "./cropEditor"
 // import userManager from "./userManager"
-// import houseKeeping from "./houseKeeping"
+import houseKeeping from "./houseKeeping"
 // import predictionManager from "./predictionManager"
 // import templateManager from "./templateManager"
 // import photoShiftEditor from "./photoShiftEditor"
@@ -38,12 +38,13 @@ if(process.client) {
     storage: st,
     asyncStorage: true,
     reducer: ({ 
-      cropEditor: {haschanges, isTopdown, ...cropEditor}, 
-      userManager: {assets, lastUserId, credits, ...userManager},
+      // cropEditor: {haschanges, isTopdown, ...cropEditor}, 
+      // userManager: {assets, lastUserId, credits, ...userManager},
       houseKeeping,
       // photoShiftEditor,
       ...rest })=> {
-      return {userManager: {assets, lastUserId, credits}, cropEditor, ...rest}
+      // return {userManager: {assets, lastUserId, credits}, cropEditor, ...rest}
+      return {}
     }
   })
 }
@@ -53,7 +54,7 @@ const store = new Store({
   modules: {
     // cropEditor,
     // userManager,
-    // houseKeeping,
+    houseKeeping,
     // predictionManager,
     // templateManager,
     // qrManager,

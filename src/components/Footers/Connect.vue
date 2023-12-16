@@ -15,9 +15,10 @@
   right: 20px;
   display: flex;
   flex-direction: column;
-  background: rgba(0,0,0,0.1);
+  background: rgba(211, 211, 211, 1);
   padding: 15px;
   border-radius: 5px;
+  z-index: 1000;
 
   a {
     font-weight: bold;

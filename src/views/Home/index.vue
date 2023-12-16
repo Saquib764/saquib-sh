@@ -16,6 +16,7 @@
     <h1 class="mt-6">Tools</h1>
     <div>
       <a href="/tools/ai-blog-writer" target="_blank">Free AI blog writer, step-by-step</a>
+      <a href="/tools/subscribe-arxiv" target="_blank">Free arxiv new paper release notifier</a>
     </div>
   </div>
 </template>
