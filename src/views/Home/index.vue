@@ -14,7 +14,7 @@
     <p>My start-up is in early revenue phase, looking forward to grow quickly. I usually share my start-up journey on Twitter.</p>
 
     <h1 class="mt-6">Tools</h1>
-    <div>
+    <div style="display: flex; flex-direction: column; gap: 10px;">
       <a href="/tools/ai-blog-writer" target="_blank">Free AI blog writer, step-by-step</a>
       <a href="/tools/subscribe-arxiv" target="_blank">Free arxiv new paper release notifier</a>
     </div>
