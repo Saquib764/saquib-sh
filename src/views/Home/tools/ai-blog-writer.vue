@@ -248,14 +248,18 @@ watch(()=>idea, (val)=>{
   clearTimeout(loop)
   loop = setTimeout(()=>{
     if(idea.id) {
+      const isNew = !idea.ideas.find((item)=>item.id === idea.id)
       // update saved idea
-      const i = {
+      let i = {
         id: idea.id,
-        keyword: idea.keyword,
         title: idea.title,
         description: idea.description,
         outlines: idea.outlines,
       }
+      if(isNew) {
+        i.created_at = Date.now()
+        i.keyword = idea.keyword
+      } 
       idea.ideas = [i, ...idea.ideas.filter((item)=>item.id !== idea.id)]
     }
     localStorage.setItem('a-writer-idea', JSON.stringify(val))
@@ -298,6 +302,7 @@ async function suggestArticle(ret = false) {
 }
 
 function onSelectIdea(item) {
+  console.log(item)
   idea.outlines = item.outlines || []
   idea.id = item.id;
   idea.keyword = item.keyword;
