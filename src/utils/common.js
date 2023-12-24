@@ -265,4 +265,5 @@ export async function scanQR(url, return_bool=false) {
 export const windowCopy = _windowCopy
 export const locationCopy = _locationCopy
 export const copyNavigator = _copyNavigator
+export const navigatorCopy = _copyNavigator
 export const localStorageCopy = _localStorageCopy
