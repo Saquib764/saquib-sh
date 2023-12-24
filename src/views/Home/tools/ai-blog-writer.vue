@@ -257,7 +257,7 @@ watch(()=>idea, (val)=>{
         description: idea.description,
         outlines: idea.outlines,
       }
-      if(isNew) {
+      if(!i.keyword) {
         i.created_at = Date.now()
         i.keyword = idea.keyword
       } 
