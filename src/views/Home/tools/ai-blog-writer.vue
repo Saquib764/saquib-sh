@@ -248,9 +248,10 @@ watch(()=>idea, (val)=>{
   clearTimeout(loop)
   loop = setTimeout(()=>{
     if(idea.id && states.menu === "2") {
-      const isNew = !idea.ideas.find((item)=>item.id === idea.id)
+      const i = idea.ideas.find((item)=>item.id === idea.id) || {}
       // update saved idea
-      let i = {
+      i = {
+        ...i,
         id: idea.id,
         title: idea.title,
         description: idea.description,
