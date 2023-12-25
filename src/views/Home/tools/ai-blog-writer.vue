@@ -40,7 +40,7 @@
                       {{ item.title }}
                     </v-list-item-title>
                     <v-list-item-subtitle>
-                      {{ item.description }}
+                      {{ item.keyword }} * {{ item.description }}
                     </v-list-item-subtitle>
                     <template v-slot:append>
                       <v-btn
