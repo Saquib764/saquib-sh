@@ -154,8 +154,10 @@
             <v-btn
               @click="copyMd(states.preview)"
               variant="outlined"
-              prepend-icon="mdi-content-copy">copy MD</v-btn>
-            <v-btn @click="states.isPreviewing=false" icon="mdi-close"></v-btn>
+              :color="states.isCopied?'success':'black'"
+              :prepend-icon="states.isCopied?'mdi-check-all':'mdi-content-copy'"
+              >{{ states.isCopied?'copied':'copy MD' }}</v-btn>
+            <v-btn @click="states.isPreviewing=false; states.isCopied=false" icon="mdi-close"></v-btn>
           </template>
         </v-toolbar>
         <div style="width: 60vw; margin: auto;">
@@ -221,6 +223,7 @@ const states = reactive({
   isGeneratingTitle: false,
   isGeneratingMeta: false,
   isPreviewing: false,
+  isCopied: false,
   preview: {
     title: '',
     data: []
@@ -248,7 +251,7 @@ watch(()=>idea, (val)=>{
   clearTimeout(loop)
   loop = setTimeout(()=>{
     if(idea.id && states.menu === "2") {
-      const i = idea.ideas.find((item)=>item.id === idea.id) || {}
+      let i = idea.ideas.find((item)=>item.id === idea.id) || {}
       // update saved idea
       i = {
         ...i,
@@ -303,7 +306,6 @@ async function suggestArticle(ret = false) {
 }
 
 function onSelectIdea(item) {
-  console.log(item)
   idea.outlines = item.outlines || []
   idea.id = item.id;
   idea.keyword = item.keyword;
@@ -452,6 +454,11 @@ function copyMd(outline) {
     md += outline.data[i].paragraph + '\n\n'
   }
   navigator.clipboard.writeText(md)
+  states.isCopied = true
+
+  setTimeout(()=>{
+    states.isCopied = false
+  }, 30000)
 }
 </script>
 
