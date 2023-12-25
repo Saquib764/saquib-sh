@@ -446,14 +446,14 @@ function copyMd(outline) {
   # ${outline.title}\n\n
 
   ---
-  ${outline.description}
+  ${outline.metadescription}
   ---
   `
   for(let i=0; i<outline.data.length; i++) {
     md += `## ${outline.data[i].heading}\n\n`
     md += outline.data[i].paragraph + '\n\n'
   }
-  navigator.clipboard.writeText(md)
+  navigator.clipboard.writeText(md.trim())
   states.isCopied = true
 
   setTimeout(()=>{
