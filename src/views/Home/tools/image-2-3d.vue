@@ -141,7 +141,7 @@ onMounted(async ()=>{
     vertexShader,
     fragmentShader,
     vertexColors: true
-});
+  });
 
 
   const pointCloud = new THREE.Points(geometry, material);
