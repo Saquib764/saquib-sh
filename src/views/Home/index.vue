@@ -16,7 +16,7 @@
     <h1 class="mt-6">Tools</h1>
     <div style="display: flex; flex-direction: column; gap: 10px;">
       <a href="/tools/ai-blog-writer" target="_blank">Free AI blog writer, step-by-step</a>
-      <a href="/tools/subscribe-arxiv" target="_blank">Free arxiv new paper release notifier</a>
+      <a href="/tools/image-2-3d" target="_blank">Image to 3D</a>
     </div>
   </div>
 </template>

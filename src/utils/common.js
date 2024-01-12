@@ -111,6 +111,7 @@ export function getImageFromUrl(url) {
         width: image.width,
         url,
         base64Encode: () => base64EncodeImage(image),
+        image
       });
     };
     image.onerror = () => reject();
