@@ -65,11 +65,17 @@ export function dispose() {
 export function useOrbitControl() {
   if(!state.orbitControl) {
     const orbitControl = new OrbitControls(state.camera, state.renderer.domElement)
-    orbitControl.rotateSpeed *= 0.25;
+    // orbitControl.rotateSpeed *= 0.25;
     orbitControl.enableDamping = true
     orbitControl.dampingFactor = 0.25
-    orbitControl.enableZoom = true
-    orbitControl.enablePan = true
+    // orbitControl.enableZoom = true
+    // orbitControl.enablePan = true
+    // orbitControl.minDistance = 100
+    // orbitControl.maxDistance = 500
+    orbitControl.screenSpacePanning = false
+    // orbitControl.enableRotate = false
+
+    orbitControl.update()
     state.orbitControl = orbitControl
   }
   return state.orbitControl
