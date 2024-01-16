@@ -56,6 +56,27 @@ function normalize_depth(depth_data) {
   return [min, max]
 }
 
+function get_depth_32(depth_data){
+  let data_u32 = new Uint32Array(depth_data.data.buffer);
+  const depth = new jsfeat.matrix_t(depth_data.width, depth_data.height, jsfeat.F32_t | jsfeat.C1_t);
+  for(let i=0; i<depth_data.data.length; i++) {
+    depth.data[i] = data_u32[i]
+  }
+  return depth
+}
+
+function get_real_depth_from_depth_map(grascale_image_data) {
+  const depth = new jsfeat.matrix_t(grascale_image_data.cols, grascale_image_data.rows, jsfeat.F64_t | jsfeat.C1_t);
+  const M = Math.pow(2, 32) 
+
+  // Get the fourth channel from image data
+  for (let i = 0; i < grascale_image_data.data.length; i++) {
+    const nd = grascale_image_data.data[i] / M
+    depth.data[i] = 255 * 2/(nd + 1)
+  }
+  return depth
+}
+
 function depth_to_3d(depth_data, image_data) {
   const points = []
   const colors = []
@@ -63,17 +84,18 @@ function depth_to_3d(depth_data, image_data) {
   let ox = image_data.width / 2
   let oy = image_data.height / 2
   let f = 0.001
+  const M = Math.pow(2, 32) 
 
   for (let i = 0; i < image_data.width * image_data.height; i++) {
-    const depth = depth_data.data[i] 
+    const depth = depth_data.data[i] / M
     // const z = 100 * (depth - 255) / 255.0
-    const z = -10.0 * 255/ (depth + 155.0)
+    const z = -10.0 / (depth + 0.20)
 
     const u = i % image_data.width
     const v = Math.floor(i / image_data.width)
     let x =  -(u - ox) * z * f
     let y =  -(v - oy) * z * f
-    points.push(new THREE.Vector3(x, 0-y, 40 + z))
+    points.push(new THREE.Vector3(x, 0-y, 10 + z))
 
     colors.push(image_data.data[i * 4]/255.0, image_data.data[i * 4 + 1]/255.0, image_data.data[i * 4 + 2]/255.0)
 
@@ -106,27 +128,30 @@ let orbitController = null
 
 onMounted(async ()=>{
   const scene = useScene()
-  let depth_data = await get_image_data('/images/3d/bottle2_depth_large.png')
-  let image_data = await get_image_data('/images/3d/bottle2.png')
+  let name = 'bottle2'
+  let depth_data = await get_image_data(`/images/3d/${name}_depth_large.png`)
+  let image_data = await get_image_data(`/images/3d/${name}.png`)
 
-  let depth_u8 = new jsfeat.matrix_t(1024, 1024, jsfeat.U8_t | jsfeat.C1_t);
-  jsfeat.imgproc.grayscale(depth_data.data, 1024, 1024, depth_u8);
+  let depth_u32 = get_depth_32(depth_data)
 
-  let image_u8 = new jsfeat.matrix_t(1024, 1024, jsfeat.U8_t | jsfeat.C1_t);
-  jsfeat.imgproc.grayscale(image_data.data, 1024, 1024, image_u8);
+  // let depth_u8 = new jsfeat.matrix_t(1024, 1024, jsfeat.U8_t | jsfeat.C1_t);
+  // jsfeat.imgproc.grayscale(depth_data.data, 1024, 1024, depth_u8);
 
-  const [min, max] = normalize_depth(depth_u8)
+  // let image_u8 = new jsfeat.matrix_t(1024, 1024, jsfeat.U8_t | jsfeat.C1_t);
+  // jsfeat.imgproc.grayscale(image_data.data, 1024, 1024, image_u8);
+
+  // const [min, max] = normalize_depth(depth_u8)
 
   let options = {
-    radius: parseInt(255/max) + 1,
-    sigma: 9
+    radius: 2,
+    sigma: 4
   };
   let r = options.radius|0;
   let kernel_size = (r+1) << 1;
-  jsfeat.imgproc.gaussian_blur(depth_u8, depth_u8, kernel_size, options.sigma);
+  jsfeat.imgproc.gaussian_blur(depth_u32, depth_u32, kernel_size, options.sigma);
 
   // Sample array of 3D points
-  const [points, colors, sizes] = depth_to_3d(depth_u8, image_data);
+  const [points, colors, sizes] = depth_to_3d(depth_u32, image_data);
 
   const geometry = new THREE.BufferGeometry().setFromPoints(points);
 
@@ -153,12 +178,12 @@ onMounted(async ()=>{
   const camera = useCamera()
 
   orbitController.target.set(0, 0, 0)
-  orbitController.attach(camera)
+  // orbitController.attach(camera)
   // const transformController = useTransformControl()
 
   // transformController.attach(pointCloud)
 
-  scene.add(transformController)
+  // scene.add(transformController)
 
 })
 
