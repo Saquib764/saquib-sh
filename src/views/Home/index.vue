@@ -1,11 +1,11 @@
 <template>
   <div class="home-page">
     <span style="margin-top: 50px; font-size: 90px;">Saquib Alam</span>
-    <span>co-founder at <a href="https://zust.ai">zust.ai</a></span>
+    <span>co-founder at <a href="https://photoshift.co">photoshift.co</a></span>
     <p>
       Hi there, I am a physicist turned software engineer. I am passionate about building products that solve real world problems. I am currently working on Zust.ai, a generative AI platform for product photography.
     </p>
-    <p>We are building zust as a remote first company, while slow traveling around India.</p>
+    <p>We are building photoshift.co as a remote first company, while slow traveling around India.</p>
     <div class="social">
       <a href="https://twitter.com/saquiboye" target="_blank"><img src="https://img.shields.io/twitter/follow/saquiboye?style=social" /></a>
       <a href="https://instagram.com/saquiboye" target="_blank"><img src="https://img.shields.io/badge/-saquiboye-%23E4405F?style=flat-square&logo=Instagram&logoColor=white" /></a>

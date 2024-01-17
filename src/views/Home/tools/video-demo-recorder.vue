@@ -1,8 +1,9 @@
 <template>
   <div class="video-demo-recorder">
     <div class="video-demo-recorder__container">
-      <video ref="video" class="mirror" autoplay></video>
+      <video ref="videoEl" class="mirror" autoplay></video>
     </div>
+    <v-btn @click="stopCamera()">stop</v-btn>
   </div>
 </template>
 
@@ -30,6 +31,10 @@ function startCamera() {
   .then((_stream)=>{
     videoEl.value.srcObject = _stream
     streams.camera = _stream
+
+    console.log(_stream.getTracks())
+
+    recordStream(_stream)
   })
 }
 function startScreen() {
@@ -41,11 +46,31 @@ function startScreen() {
   navigator.mediaDevices.getDisplayMedia({video: true, audio: true})
   .then((_stream)=>{
     videoEl.value.srcObject = _stream
+
+    // print tracks
+    console.log(_stream.getTracks())
     streams.screen = _stream
+    recordStream(_stream)
   })
   .catch((err)=>{
     console.log(err)
   })
+}
+function recordStream(stream) {
+  streams.recorder = new MediaRecorder(stream)
+  streams.recorder.ondataavailable = (e)=>{
+    streams.chunks.push(e.data)
+  }
+  streams.recorder.onstop = (e)=>{
+    const blob = new Blob(streams.chunks, {type: 'video/webm'})
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'test.webm'
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+  streams.recorder.start()
 }
 function stopCamera() {
   streams.camera?.getTracks().forEach((track)=>{
@@ -54,7 +79,8 @@ function stopCamera() {
 }
 
 onMounted(()=>{
-  startScreen()
+  // startScreen()
+  // startCamera()
 })
 onBeforeUnmount(()=>{
   stopCamera()

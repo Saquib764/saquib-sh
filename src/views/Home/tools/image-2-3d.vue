@@ -57,17 +57,22 @@ function normalize_depth(depth_data) {
 }
 
 function get_depth_32(depth_data){
+  const width = depth_data.width || depth_data.cols
+  const height = depth_data.height || depth_data.rows
   let data_u32 = new Uint32Array(depth_data.data.buffer);
-  const depth = new jsfeat.matrix_t(depth_data.width, depth_data.height, jsfeat.F32_t | jsfeat.C1_t);
+  const depth = new jsfeat.matrix_t(width, height, jsfeat.F32_t | jsfeat.C1_t);
   for(let i=0; i<depth_data.data.length; i++) {
-    depth.data[i] = data_u32[i]
+    if(mode == 'F32') {
+      depth.data[i] = data_u32[i]
+    } else {
+      depth.data[i] = (depth_data.data[i] / 255.0) * M
+    }
   }
   return depth
 }
 
 function get_real_depth_from_depth_map(grascale_image_data) {
   const depth = new jsfeat.matrix_t(grascale_image_data.cols, grascale_image_data.rows, jsfeat.F64_t | jsfeat.C1_t);
-  const M = Math.pow(2, 32) 
 
   // Get the fourth channel from image data
   for (let i = 0; i < grascale_image_data.data.length; i++) {
@@ -84,12 +89,11 @@ function depth_to_3d(depth_data, image_data) {
   let ox = image_data.width / 2
   let oy = image_data.height / 2
   let f = 0.001
-  const M = Math.pow(2, 32) 
 
   for (let i = 0; i < image_data.width * image_data.height; i++) {
-    const depth = depth_data.data[i] / M
+    const depth = 1 - depth_data.data[i] / M
     // const z = 100 * (depth - 255) / 255.0
-    const z = -10.0 / (depth + 0.20)
+    const z = -10.0 / (depth + 0.0010)
 
     const u = i % image_data.width
     const v = Math.floor(i / image_data.width)
@@ -126,29 +130,44 @@ void main() {
 
 let orbitController = null
 
+
+// const mode = 'F32'
+// const M = Math.pow(2, 32) - 1
+const mode = 'U8'
+const M = Math.pow(2, 8) - 1
+
 onMounted(async ()=>{
   const scene = useScene()
-  let name = 'bottle2'
-  let depth_data = await get_image_data(`/images/3d/${name}_depth_large.png`)
+  let name = 'car4'
+  // let depth_data = await get_image_data(`/images/3d/${name}_depth_32.png`)
+  let depth_data = await get_image_data(`/images/3d/${name}_depth_marigold.png`)
   let image_data = await get_image_data(`/images/3d/${name}.png`)
 
-  let depth_u32 = get_depth_32(depth_data)
+  console.log('depth_data', depth_data)
 
-  // let depth_u8 = new jsfeat.matrix_t(1024, 1024, jsfeat.U8_t | jsfeat.C1_t);
-  // jsfeat.imgproc.grayscale(depth_data.data, 1024, 1024, depth_u8);
+  let depth_u8 = new jsfeat.matrix_t(depth_data.height, depth_data.width, jsfeat.U8_t | jsfeat.C1_t);
+  jsfeat.imgproc.grayscale(depth_data.data, depth_data.height, depth_data.width, depth_u8);
+
+
+  let depth_u32;
+  if(mode == 'F32') {
+    depth_u32 = get_depth_32(depth_data)
+  } else {
+    let options = {
+      radius: 1,
+      sigma: 1
+    };
+    let r = options.radius|0;
+    let kernel_size = (r+1) << 1;
+    console.log('kernel_size', kernel_size) 
+    // jsfeat.imgproc.gaussian_blur(depth_u8, depth_u8, kernel_size, options.sigma);
+    depth_u32 = get_depth_32(depth_u8)
+  }
 
   // let image_u8 = new jsfeat.matrix_t(1024, 1024, jsfeat.U8_t | jsfeat.C1_t);
   // jsfeat.imgproc.grayscale(image_data.data, 1024, 1024, image_u8);
 
   // const [min, max] = normalize_depth(depth_u8)
-
-  let options = {
-    radius: 2,
-    sigma: 4
-  };
-  let r = options.radius|0;
-  let kernel_size = (r+1) << 1;
-  jsfeat.imgproc.gaussian_blur(depth_u32, depth_u32, kernel_size, options.sigma);
 
   // Sample array of 3D points
   const [points, colors, sizes] = depth_to_3d(depth_u32, image_data);
