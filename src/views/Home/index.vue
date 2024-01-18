@@ -13,10 +13,12 @@
     </div>
     <p>My start-up is in early revenue phase, looking forward to grow quickly. I usually share my start-up journey on Twitter.</p>
 
-    <h1 class="mt-6">Tools</h1>
+    <h1 class="mt-6">Experiments-</h1>
+    <span>A list of web-based experiments in the field of computer vision, generative AI, 3D, and robotics. </span>
     <div style="display: flex; flex-direction: column; gap: 10px;">
-      <a href="/tools/ai-blog-writer" target="_blank">Free AI blog writer, step-by-step</a>
-      <a href="/tools/image-2-3d" target="_blank">Image to 3D</a>
+      <a href="/tools/ai-blog-writer" target="_blank">Free AI blog writer, step-by-step (almost finished. Free product to write blogs at super speed)</a>
+      <a href="/tools/image-2-3d" target="_blank">Image to 3D (Building...)</a>
+      <a href="/tools/video-demo-recorder" target="_blank">A free tool to easily record and edit video demo of your product (Building...)</a>
     </div>
   </div>
 </template>
