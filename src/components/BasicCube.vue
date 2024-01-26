@@ -31,13 +31,16 @@ onMounted( () =>{
   const scene = useScene()
 
   // Adding a cube
-  let geometry = new THREE.BoxGeometry()
+  let geometry = new THREE.BoxGeometry(4, 4, 4)
   let material = new THREE.MeshPhongMaterial({color: 0xeeffaa})
   cube = new THREE.Mesh(geometry, material)
 
   cube.position.x = props.position.x || 0
   cube.position.y = props.position.y || 0
   cube.position.z = props.position.z || 0
+
+  cube.rotation.x = 0.5
+  cube.rotation.y = 0.5
 
 
   scene.add(cube)
@@ -49,7 +52,7 @@ onBeforeUnmount( () =>{
 
 function loop() {
   if(!cube) return
-  cube.rotation.x += 0.01
+  // cube.rotation.x += 0.01
 }
 </script>
 

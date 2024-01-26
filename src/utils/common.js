@@ -263,6 +263,42 @@ export async function scanQR(url, return_bool=false) {
   return {count, total_test: T}
 }
 
+export async function createVideoThumbnail(video_url) {
+  const video = document.createElement('video');
+  video.src = video_url;
+  video.crossOrigin = "anonymous";
+  video.muted = true
+  video.autoplay = true
+  video.loop = true
+  video.playsinline = true
+  video.controls = true
+  video.style.position = 'absolute'
+  video.style.top = '0px'
+  video.style.left = '0px'
+  video.style.width = '100%'
+  video.style.height = '100%'
+  video.style.objectFit = 'cover'
+  video.style.zIndex = '1'
+  video.style.opacity = '0'
+  video.style.pointerEvents = 'none'
+  video.style.visibility = 'hidden'
+  video.style.display = 'none'
+  document.body.appendChild(video)
+  await new Promise((resolve, reject)=>{
+    video.onloadeddata = () => {
+      resolve()
+    }
+  })
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  ctx.drawImage(video, 0, 0);
+  const thumbnail = canvas.toDataURL("image/png");
+  document.body.removeChild(video)
+  return thumbnail
+} 
+
 export const windowCopy = _windowCopy
 export const locationCopy = _locationCopy
 export const copyNavigator = _copyNavigator

@@ -8,7 +8,7 @@ import { ref, watch, reactive, onMounted, onBeforeUnmount } from 'vue'
 let light = null
 
 function setLight(x=1, y=0, z=1) {
-  let light = new THREE.PointLight(0xffff00, 3.0, 100, 0.0)
+  let light = new THREE.PointLight(0xffffff, 1.10, 400, 0.0)
   light.position.set(x, y, z)
   light.castShadow = true
   light.shadow.radius = 100
@@ -20,12 +20,12 @@ function setLight(x=1, y=0, z=1) {
 onMounted( () =>{
   const scene = useScene()
 
-  let ambientLight = new THREE.AmbientLight (0xffff00, 0.0)
+  let ambientLight = new THREE.AmbientLight (0xffffff, 1.0)
   scene.add(ambientLight)
 
 
   light = setLight(0, -0, 5)
-  scene.add(light)
+  // scene.add(light)
 
   // const light2 = setLight(-15, -30, 15)
   // scene.add(light2)

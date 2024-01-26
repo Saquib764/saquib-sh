@@ -40,12 +40,12 @@ export function useRenderer() {
 export function useCamera() {
   if(!state.camera) {
     const camera = new THREE.PerspectiveCamera(
-      70,
+      160,
       1.0,
       1,
       1000
     )
-    camera.up.set(0, 0, 1);
+    camera.up.set(0, 1, 1);
     camera.position.set(0, -0, 20)
     camera.lookAt(0,0,0)
     state.camera = camera

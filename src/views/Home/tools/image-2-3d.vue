@@ -1,9 +1,43 @@
 <template>
   <div>
+    <div style="display: flex; flex-direction: row;">
+      <uploader-simple
+        ref="uploadEl"
+        :preview-url="states.image_url || null"
+        @on-file-upload="onFileUpload"
+        style="width: unset; max-width: 200px; background: rgba(181, 197, 207, 0.3);"
+        :is-uploading="states.isUploading"
+        :uploadMessage="states.uploadMessage" />
+      <!-- <img :src="states.depth_url" style="width: 100px; object-fit: contain;"/>
+      <div style="width: 400px;">
+        <v-slider
+          v-model="states.x"
+          :min="-100"
+          :max="100"
+          step="1"
+          thumb-label
+          label="X"/>
+        <v-slider
+          v-model="states.y"
+          :min="-100"
+          :max="100"
+          step="1"
+          thumb-label
+          label="Y"/>
+        <v-slider
+          v-model="states.z"
+          :min="-20"
+          :max="40"
+          step="1"
+          thumb-label
+          label="Z"/>
+      </div> -->
+    </div>
     <three-js>
+      <!-- <point-light :x="states.x" :y="states.y" :z="states.z"/> -->
       <ambient-light/>
       <grid-helper/>
-      <!-- <basic-cube :position="{x: 0, y: 0, z: 0}"/> -->
+      <!-- <basic-cube :position="{x: 0, y: 0, z: 4}"/> -->
       <animation-loop :frame="onFrame"/>
     </three-js>
   </div>
@@ -18,18 +52,87 @@ import BasicCube from '@/components/BasicCube.vue';
 import AnimationLoop from '@/components/AnimationLoop.vue';
 import AmbientLight from '@/components/AmbientLight.vue';
 import GridHelper from '@/components/GridHelper.vue';
+import UploaderSimple from '@/components/Uploaders/Simple.vue';
+import PointLight from '@/components/PointLight.vue';
 
-async function get_image_data(url) {
+import {storage} from '@/firebase'
+import { ref as Ref, uploadBytes, getDownloadURL, getBlob } from "firebase/storage";
+
+import {  BASE_API, ENV } from '@/constants';
+import { downloadImage, isMobile, sleep, getImageDimension } from "@/utils/common"
+
+const states = reactive({
+  height: 100,
+  width: 100,
+  isUploading: false,
+  uploadMessage: "",
+  image_url: null,
+  depth_url: null,
+  x:0,
+  y:0,
+  z:10,
+})
+
+const uploadEl = ref(null)
+
+const STORAGE_KEY = '2D_TO_3D'
+
+watch(()=>[states.image_url, states.depth_url], (url)=> {
+  let {image_url, depth_url} = states
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({image_url, depth_url}))
+}, {deep: true})
+
+async function onFileUpload(files_list) {
+  states.isUploading = true
+  states.uploadMessage = "Uploading image..."
+  const files = [files_list[0]]
+
+  const instance_id = Math.floor(Math.random() * 89999 + 10000).toString()
+  const instance_url = `depth-2d-to-3d/${instance_id}.png`
+  const imgRef = Ref(storage, instance_url);
+  await uploadBytes(imgRef, files[0])
+
+  states.image_url = toFirestoreUrl(instance_url)
+  states.uploadMessage = "Processing image..."
+  let res = await getDepth(states.image_url)
+  if(res.result.length) {
+    states.depth_url = res.result[0]
+  }
+  states.uploadMessage = "Rendering scene..."
+  await createWorld()
+  states.isUploading = false
+  states.uploadMessage = ""
+}
+
+async function getDepth(url) {
+  const res = await fetch(`${BASE_API}/depth`, {
+    method: 'POST',
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      image_url: url
+    })
+  })
+  const data = await res.json()
+  return data
+}
+
+async function get_image_data(url, width, height) {
   const canvas = document.createElement('canvas')
   const ctx = canvas.getContext('2d')
 
   const image = await getImageFromUrl(url);
+  console.log('image', image)
 
-  canvas.width = image.width;
-  canvas.height = image.height;
-  ctx.drawImage(image.image, 0, 0);
+  width = width || image.width
+  height = height || image.height
 
-  return ctx.getImageData(0, 0, image.width, image.height)
+  canvas.width = width;
+  canvas.height = height;
+  ctx.drawImage(image.image, 0, 0, width, height);
+
+  return [image, ctx.getImageData(0, 0, width, height)]
 }
 
 function get_min_max(depth_data) {
@@ -47,14 +150,7 @@ function get_min_max(depth_data) {
   return [min, max]
 }
 
-function normalize_depth(depth_data) {
-  const [min, max] = get_min_max(depth_data)
-  for (let i = 0; i < depth_data.data.length; i++) {
-    const depth = depth_data.data[i]
-    depth_data.data[i] = (depth - min) * 255.0 / (max - min)
-  }
-  return [min, max]
-}
+
 
 function get_depth_32(depth_data){
   const width = depth_data.width || depth_data.cols
@@ -65,47 +161,66 @@ function get_depth_32(depth_data){
     if(mode == 'F32') {
       depth.data[i] = data_u32[i]
     } else {
-      depth.data[i] = (depth_data.data[i] / 255.0) * M
+      depth.data[i] = depth_data.data[i]
     }
   }
   return depth
 }
 
-function get_real_depth_from_depth_map(grascale_image_data) {
-  const depth = new jsfeat.matrix_t(grascale_image_data.cols, grascale_image_data.rows, jsfeat.F64_t | jsfeat.C1_t);
-
-  // Get the fourth channel from image data
-  for (let i = 0; i < grascale_image_data.data.length; i++) {
-    const nd = grascale_image_data.data[i] / M
-    depth.data[i] = 255 * 2/(nd + 1)
-  }
-  return depth
-}
 
 function depth_to_3d(depth_data, image_data) {
   const points = []
   const colors = []
   const sizes = []
-  let ox = image_data.width / 2
-  let oy = image_data.height / 2
-  let f = 0.001
+  let ox = 1.0 * image_data.width / 2
+  let oy = 1.0 * image_data.height / 2
+  let f = 0.01
+
+  let corner_min = new THREE.Vector3(0, 0, 0)
+  let corner_max = new THREE.Vector3(image_data.width, image_data.height, 0)
 
   for (let i = 0; i < image_data.width * image_data.height; i++) {
-    const depth = 1 - depth_data.data[i] / M
-    // const z = 100 * (depth - 255) / 255.0
-    const z = -10.0 / (depth + 0.0010)
+    const depth = depth_data.data[i] / M
+    // const z = 100 * (depth - 1) 
+    // const z = 1.0 / (depth + .001)
+    const z = -300 *(depth + 0.5)
 
     const u = i % image_data.width
     const v = Math.floor(i / image_data.width)
     let x =  -(u - ox) * z * f
-    let y =  -(v - oy) * z * f
-    points.push(new THREE.Vector3(x, 0-y, 10 + z))
+    let y =  (v - oy) * z * f
+    points.push(new THREE.Vector3(x, y, z))
+    if(i == 0) {
+      corner_min.x = x
+      corner_min.y = y
+      corner_min.z = z
+      corner_max.x = x
+      corner_max.y = y
+      corner_max.z = z
+    }
+    if(x < corner_min.x) {
+      corner_min.x = x
+    }
+    if(y < corner_min.y) {
+      corner_min.y = y
+    }
+    if(z < corner_min.z) {
+      corner_min.z = z
+    }
+    if(x > corner_max.x) {
+      corner_max.x = x
+    }
+    if(y > corner_max.y) {
+      corner_max.y = y
+    }
+    if(z > corner_max.z) {
+      corner_max.z = z
+    }
 
     colors.push(image_data.data[i * 4]/255.0, image_data.data[i * 4 + 1]/255.0, image_data.data[i * 4 + 2]/255.0)
-
     sizes.push(Math.abs(30*f*z))
   }
-  return [points, colors, sizes]
+  return [points, colors, sizes, corner_min, corner_max]
 }
 
 const vertexShader = `
@@ -115,7 +230,7 @@ varying vec3 vColor;
 void main() {
     vColor = color;
     vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-    gl_PointSize = size * (100.0 / -mvPosition.z);
+    gl_PointSize = size * (10.0 / -mvPosition.z);
     gl_Position = projectionMatrix * mvPosition;
 }
 `
@@ -131,47 +246,31 @@ void main() {
 let orbitController = null
 
 
-// const mode = 'F32'
-// const M = Math.pow(2, 32) - 1
-const mode = 'U8'
-const M = Math.pow(2, 8) - 1
+const mode = 'F32'
+const M = Math.pow(2, 32) 
+// const mode = 'U8'
+// const M = Math.pow(2, 8) - 1
 
 onMounted(async ()=>{
-  const scene = useScene()
-  let name = 'car4'
-  // let depth_data = await get_image_data(`/images/3d/${name}_depth_32.png`)
-  let depth_data = await get_image_data(`/images/3d/${name}_depth_marigold.png`)
-  let image_data = await get_image_data(`/images/3d/${name}.png`)
-
-  console.log('depth_data', depth_data)
-
-  let depth_u8 = new jsfeat.matrix_t(depth_data.height, depth_data.width, jsfeat.U8_t | jsfeat.C1_t);
-  jsfeat.imgproc.grayscale(depth_data.data, depth_data.height, depth_data.width, depth_u8);
-
-
-  let depth_u32;
-  if(mode == 'F32') {
-    depth_u32 = get_depth_32(depth_data)
-  } else {
-    let options = {
-      radius: 1,
-      sigma: 1
-    };
-    let r = options.radius|0;
-    let kernel_size = (r+1) << 1;
-    console.log('kernel_size', kernel_size) 
-    // jsfeat.imgproc.gaussian_blur(depth_u8, depth_u8, kernel_size, options.sigma);
-    depth_u32 = get_depth_32(depth_u8)
+  const localData = localStorage.getItem(STORAGE_KEY) || '{}'
+  const {image_url, depth_url} = JSON.parse(localData)
+  console.log('localData', {image_url, depth_url})
+  if(depth_url) {
+    states.depth_url = depth_url
   }
+  if(image_url) {
+    states.image_url = image_url
+    if(!states.depth_url) {
+      let res = await getDepth(image_url)
+      if(res.result.length) {
+        states.depth_url = res.result[0]
+      }
+    }
+  }
+  await createWorld()
+})
 
-  // let image_u8 = new jsfeat.matrix_t(1024, 1024, jsfeat.U8_t | jsfeat.C1_t);
-  // jsfeat.imgproc.grayscale(image_data.data, 1024, 1024, image_u8);
-
-  // const [min, max] = normalize_depth(depth_u8)
-
-  // Sample array of 3D points
-  const [points, colors, sizes] = depth_to_3d(depth_u32, image_data);
-
+function set_point_cloud(points, colors, sizes) {
   const geometry = new THREE.BufferGeometry().setFromPoints(points);
 
   geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
@@ -190,13 +289,115 @@ onMounted(async ()=>{
 
   const pointCloud = new THREE.Points(geometry, material);
 
-  scene.add(pointCloud);
+  console.log('pointCloud', pointCloud)
+  return pointCloud
+}
+
+function set_surface(image, points) {
+  let textureLoader = new THREE.TextureLoader();
+  let texture = textureLoader.load(image.url);
+
+  let height = image.height
+  let width = image.width
+
+  let uvs = [];
+  // create mesh surface from grid of points, with depth data
+  // These points are vertices of the mesh
+  const geometry = new THREE.BufferGeometry();
+
+  let vertices = [];
+  for (let h = 0; h < height ; h++) {
+    for(let w = 0; w < width ; w++) {
+      let i = h * width + w
+      let point = points[i];
+      vertices.push(point.x, point.y, point.z);
+
+      uvs.push( w / width, 1 - h / height);
+    }
+  }
+  // Add faces
+  let faces = [];
+  for (let i = 0; i < height - 1; i++) {
+      for (let j = 0; j < width - 1; j++) {
+          let index = i * width + j;
+          faces.push(index, index + width, index + width + 1);
+          faces.push(index, index + width + 1, index + 1);
+      }
+  }
+
+
+  // Create a Float32Array from the vertices array
+  let verticesArray = new Float32Array(vertices);
+  let uvsArray = new Float32Array(uvs);
+  let facesArray = new Uint32Array(faces);
+
+  geometry.setAttribute('position', new THREE.BufferAttribute(verticesArray, 3));
+  geometry.setIndex(new THREE.BufferAttribute(facesArray, 1));
+  geometry.setAttribute('uv', new THREE.BufferAttribute(uvsArray, 2));
+  geometry.computeVertexNormals();
+  let material = new THREE.MeshStandardMaterial({
+    map: texture,
+    roughness: 0.80,
+    metalness: 0.10,
+  });
+  // let material = new THREE.MeshBasicMaterial({ map: texture});
+  material.side = THREE.DoubleSide;
+  let mesh = new THREE.Mesh(geometry, material);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  return mesh
+}
+
+async function createWorld() {
+  const scene = useScene()
+  // let depth_data = await get_image_data(`/images/3d/${name}_depth_32.png`)
+  let [image, image_data] = await get_image_data(states.image_url)
+  let [depth, depth_data] = await get_image_data(states.depth_url, image_data.width, image_data.height)
+
+  console.log('depth_data', depth_data)
+
+  let depth_u8 = new jsfeat.matrix_t(depth_data.height, depth_data.width, jsfeat.U8_t | jsfeat.C1_t);
+  jsfeat.imgproc.grayscale(depth_data.data, depth_data.height, depth_data.width, depth_u8);
+
+
+  let depth_u32;
+  if(mode == 'F32') {
+    depth_u32 = get_depth_32(depth_data)
+    let options = {
+      radius: 2,
+      sigma: 1
+    };
+    let r = options.radius|0;
+    let kernel_size = (r+1) << 1;
+    console.log('kernel_size', kernel_size) 
+    // jsfeat.imgproc.gaussian_blur(depth_u32, depth_u32, kernel_size, options.sigma);
+  } else {
+    let options = {
+      radius: 1,
+      sigma: 1
+    };
+    let r = options.radius|0;
+    let kernel_size = (r+1) << 1;
+    console.log('kernel_size', kernel_size) 
+    // jsfeat.imgproc.gaussian_blur(depth_u8, depth_u8, kernel_size, options.sigma);
+    depth_u32 = get_depth_32(depth_u8)
+  }
+
+  // Sample array of 3D points
+  const [points, colors, sizes, corner_min, corner_max] = depth_to_3d(depth_u32, image_data);
+  console.log('corner_min', corner_min)
+  console.log('corner_max', corner_max)
+
+  const model = set_point_cloud(points, colors, sizes)
+  // const model = set_surface(image, points)
+  model.position.set(0, 0, 50)
+
+  scene.add(model);
 
 
   orbitController = useOrbitControl()
   const camera = useCamera()
 
-  orbitController.target.set(0, 0, 0)
   // orbitController.attach(camera)
   // const transformController = useTransformControl()
 
@@ -204,7 +405,9 @@ onMounted(async ()=>{
 
   // scene.add(transformController)
 
-})
+  camera.position.set(0, 0, 50)
+
+}
 
 function onFrame(e) {
   // const scene = useScene()
