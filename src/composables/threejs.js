@@ -25,6 +25,7 @@ export function useRenderer() {
         antialias: true,
         // powerPreference: "high-performance",
         alpha: true,
+        preserveDrawingBuffer: true,
     });
     renderer.setClearColor("#ffffff")
     // renderer.shadowMap.enabled = true

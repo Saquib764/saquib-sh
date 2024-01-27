@@ -18,6 +18,7 @@
     <div style="display: flex; flex-direction: column; gap: 10px;">
       <a href="/tools/ai-blog-writer" target="_blank">Free AI blog writer, step-by-step (almost finished. Free product to write blogs at super speed)</a>
       <a href="/tools/image-2-3d" target="_blank">Single image to 3D point cloud</a>
+      <a href="/tools/relight" target="_blank">Relight</a>
       <a href="/tools/video-demo-recorder" target="_blank">A free tool to easily record and edit video demo of your product (Building...)</a>
     </div>
   </div>
