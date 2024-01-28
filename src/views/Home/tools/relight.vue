@@ -3,6 +3,7 @@
     <div style="display: flex; flex-direction: column; position: absolute; top: 0; left: 10px; background: rgba(0,0,0,0.2);">
       <uploader-simple
         ref="uploadEl"
+        label="Upload image"
         :preview-url="states.image_url || null"
         @on-file-upload="onFileUpload"
         style="width: unset; max-width: 200px; background: rgba(181, 197, 207, 0.3);"
@@ -10,6 +11,7 @@
         :uploadMessage="states.uploadMessage" />
       <uploader-simple
         ref="uploadMaskEl"
+        label="Upload subject mask"
         :preview-url="states.mask_url || null"
         @on-file-upload="onMaskUpload"
         style="width: unset; max-width: 200px; background: rgba(181, 197, 207, 0.3);"
@@ -17,7 +19,7 @@
         :uploadMessage="states.uploadMessageMask" />
       <img :src="states.depth_url" style="width: 100px; object-fit: contain;"/>
       <div style="width: 200px;">
-        <v-checkbox v-model="states.hideLighting" label="Hide lighting" hide-details density="compact"/>
+        <v-checkbox v-model="states.hideLighting" label="Show original" hide-details density="compact"/>
         <v-slider
           v-model="states.smoothness"
           :min="0"
@@ -59,7 +61,7 @@
             <v-checkbox v-model="l.isDiectional" label="Directional" hide-details density="compact"/>
             <v-checkbox v-model="l.hideVisual" label="Hide light source" hide-details density="compact"/>
             <div>
-              <span>Ambience color-</span>
+              <span>Light color-</span>
               <input type="color" v-model="l.color" />
             </div>
             <v-slider
