@@ -40,6 +40,10 @@ watch(props, ()=> {
 function setLight(x=1, y=0, z=1) {
   
   let light = new THREE.DirectionalLight(props.color, props.intensity)
+  // light.castShadow = true
+  // light.shadow.radius = 1000
+  // light.shadow.mapSize.width = 2048
+  // light.shadow.mapSize.height = 2048
   // set direction
   light.position.set(x, y, z)
   return light

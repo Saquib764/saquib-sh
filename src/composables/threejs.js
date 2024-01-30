@@ -31,7 +31,7 @@ export function useRenderer() {
     // renderer.shadowMap.enabled = true
     // renderer.shadowMap.type = THREE.PCFSoftShadowMap
     // renderer.shadowMapSoft = true
-    // renderer.shadowMap.autoUpdate = false
+    // renderer.shadowMap.autoUpdate = true
     // renderer.shadowMap.needsUpdate = true
     state.renderer = renderer
   }

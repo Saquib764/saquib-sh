@@ -1,37 +1,29 @@
 <template>
   <div>
-    <div style="display: flex; flex-direction: row;">
+    <connect />
+    <div class="menu-container">
       <uploader-simple
         ref="uploadEl"
+        label="Upload scene"
         :preview-url="states.image_url || null"
         @on-file-upload="onFileUpload"
         style="width: unset; max-width: 200px; background: rgba(181, 197, 207, 0.3);"
         :is-uploading="states.isUploading"
         :uploadMessage="states.uploadMessage" />
-      <img :src="states.depth_url" style="width: 100px; object-fit: contain;"/>
-      <!-- <div style="width: 400px;">
+      <img :src="states.depth_url" style="width: 100px; height: 100px; object-fit: contain;"/>
+      <div style="width: 200px;" class="mb-3">
         <v-slider
-          v-model="states.x"
-          :min="-100"
-          :max="100"
-          step="1"
+          v-model="states.scale"
+          :min="0"
+          :max="3"
+          step="0.01"
           thumb-label
-          label="X"/>
-        <v-slider
-          v-model="states.y"
-          :min="-100"
-          :max="100"
-          step="1"
-          thumb-label
-          label="Y"/>
-        <v-slider
-          v-model="states.z"
-          :min="-20"
-          :max="40"
-          step="1"
-          thumb-label
-          label="Z"/>
-      </div> -->
+          label="Scale"/>
+        <v-select label="Render" v-model="states.render_mode" :items="['point_cloud', 'surface']"></v-select>
+        <v-btn @click="saveRender" color="black">Download</v-btn>
+
+        <v-card text="Use scroll to move camera forward/backward. Use two fingure press to pan." class="mt-3" />
+      </div>
     </div>
     <three-js>
       <!-- <point-light :x="states.x" :y="states.y" :z="states.z"/> -->
@@ -60,27 +52,53 @@ import { ref as Ref, uploadBytes, getDownloadURL, getBlob } from "firebase/stora
 
 import {  BASE_API, ENV } from '@/constants';
 import { downloadImage, isMobile, sleep, getImageDimension } from "@/utils/common"
+import Connect from '@/components/Footers/Connect.vue'
 
 const states = reactive({
   height: 100,
   width: 100,
   isUploading: false,
   uploadMessage: "",
-  image_url: null,
-  depth_url: null,
+  image_url: '/images/3d/scene7.png',
+  depth_url: '/images/3d/scene7_depth.png',
   x:0,
   y:0,
   z:10,
+  scale: 1,
+  render_mode: 'point_cloud',
 })
 
 const uploadEl = ref(null)
 
 const STORAGE_KEY = '2D_TO_3D'
+let model;
+
+let mode = 'F32'
+let M = Math.pow(2, 32) 
+// const mode = 'U8'
+// const M = Math.pow(2, 8) - 1
 
 watch(()=>[states.image_url, states.depth_url], (url)=> {
   let {image_url, depth_url} = states
   localStorage.setItem(STORAGE_KEY, JSON.stringify({image_url, depth_url}))
 }, {deep: true})
+
+watch(()=>states.scale, (val)=> {
+  if(!model) {
+    return
+  }
+  const camera = useCamera()
+  camera.fov = 160 / states.scale
+  camera.updateProjectionMatrix();
+})
+watch(()=>states.render_mode, (val)=> {
+  if(!model) {
+    return
+  }
+  const scene = useScene()
+  scene.remove(model)
+  createWorld()
+})
 
 async function onFileUpload(files_list) {
   states.isUploading = true
@@ -99,9 +117,9 @@ async function onFileUpload(files_list) {
     states.depth_url = res.result[0]
   }
   states.uploadMessage = "Rendering scene..."
-  await createWorld()
   states.isUploading = false
   states.uploadMessage = ""
+  await createWorld()
 }
 
 async function getDepth(url) {
@@ -174,7 +192,7 @@ function depth_to_3d(depth_data, image_data) {
   const sizes = []
   let ox = 1.0 * image_data.width / 2
   let oy = 1.0 * image_data.height / 2
-  let f = 0.01
+  let f = 0.005
 
   let corner_min = new THREE.Vector3(0, 0, 0)
   let corner_max = new THREE.Vector3(image_data.width, image_data.height, 0)
@@ -246,10 +264,6 @@ void main() {
 let orbitController = null
 
 
-const mode = 'F32'
-const M = Math.pow(2, 32) 
-// const mode = 'U8'
-// const M = Math.pow(2, 8) - 1
 
 onMounted(async ()=>{
   const localData = localStorage.getItem(STORAGE_KEY) || '{}'
@@ -327,11 +341,11 @@ async function set_surface(image, points) {
   // Add faces
   let faces = [];
   for (let i = 0; i < height - 1; i++) {
-      for (let j = 0; j < width - 1; j++) {
-          let index = i * width + j;
-          faces.push(index, index + width, index + width + 1);
-          faces.push(index, index + width + 1, index + 1);
-      }
+    for (let j = 0; j < width - 1; j++) {
+      let index = i * width + j;
+      faces.push(index, index + width, index + width + 1);
+      faces.push(index, index + width + 1, index + 1);
+    }
   }
 
 
@@ -358,10 +372,29 @@ async function set_surface(image, points) {
 }
 
 async function createWorld() {
+  if(!states.image_url || !states.depth_url) {
+    return
+  }
   const scene = useScene()
   // let depth_data = await get_image_data(`/images/3d/${name}_depth_32.png`)
   let [image, image_data] = await get_image_data(states.image_url)
   let [depth, depth_data] = await get_image_data(states.depth_url, image_data.width, image_data.height)
+  
+  let gray_count = 0
+  let gray_sample_n = 5
+  for(let i = 0; i < gray_sample_n; i++) {
+    let r = Math.floor(Math.random() * depth_data.height * depth_data.width)
+    if(depth_data.data[r] == depth_data.data[r+1] && depth_data.data[r] == depth_data.data[r+2]) {
+      gray_count += 1
+    }
+  }
+  // if(gray_count / gray_sample_n > 0.6) {
+  //   mode = 'U8'
+  //   M = Math.pow(2, 8) - 1
+  // } else {
+  //   mode = 'F32'
+  //   M = Math.pow(2, 32) 
+  // }
 
   console.log('depth_data', depth_data)
 
@@ -394,11 +427,14 @@ async function createWorld() {
 
   // Sample array of 3D points
   const [points, colors, sizes, corner_min, corner_max] = depth_to_3d(depth_u32, image_data);
-  console.log('corner_min', corner_min)
-  console.log('corner_max', corner_max)
+  // console.log('corner_min', corner_min)
+  // console.log('corner_max', corner_max)
 
-  // const model = set_point_cloud(points, colors, sizes)
-  const model = await set_surface(image, points)
+  if(states.render_mode == 'point_cloud') {
+    model = set_point_cloud(points, colors, sizes)
+  } else {
+    model = await set_surface(image, points)
+  }
   model.position.set(0, 0, 50)
 
   scene.add(model);
@@ -415,7 +451,6 @@ async function createWorld() {
   // scene.add(transformController)
 
   camera.position.set(0, 0, 50)
-
 }
 
 function onFrame(e) {
@@ -426,4 +461,27 @@ function onFrame(e) {
   // // manager.update()
   // renderer.render(scene, camera)
 }
+onBeforeUnmount(()=> {
+  const scene = useScene()
+  scene.remove(model)
+})
+async function saveRender() {
+  const renderer = useRenderer()
+  const canvas = renderer.domElement
+  const dataUrl = canvas.toDataURL('image/png')
+  await downloadImage(dataUrl, 'saquib-sh-3d.png')
+}
 </script>
+
+<style scoped lang="scss">
+.menu-container {
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(0,0,0,0.1);
+  padding: 10px;
+  border-radius: 10px;
+}
+</style>

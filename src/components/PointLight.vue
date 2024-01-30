@@ -35,15 +35,18 @@ watch(props, ()=> {
   light.intensity = props.intensity
   light.color = new THREE.Color(props.color)
   light.position.set(props.x, props.y, props.z)
+  
 }, {deep: true})
 
 function setLight(x=1, y=0, z=1) {
   let light = new THREE.PointLight(props.color, props.intensity, 1000, 0.0)
   light.position.set(x, y, z)
-  light.castShadow = true
-  light.shadow.radius = 100
-  light.shadow.mapSize.width = 2048
-  light.shadow.mapSize.height = 2048
+  // light.castShadow = true
+  // light.shadow.radius = 500
+  // light.shadow.mapSize.width = 2048
+  // light.shadow.mapSize.height = 2048
+  // light.shadow.camera.near = 0.5; // default
+  // light.shadow.camera.far = 1500; // default
   return light
 }
 

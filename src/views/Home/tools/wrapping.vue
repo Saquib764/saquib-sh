@@ -123,7 +123,7 @@
         :color="l.color"
         />
       <ambient-light :intensity="states.ambience_intensity" :color="states.ambience_color"/>
-      <!-- <grid-helper/> -->
+      <grid-helper/>
       <!-- <basic-cube :position="{x: 0, y: 0, z: 4}"/> -->
       <animation-loop :frame="onFrame"/>
     </three-js>
@@ -157,7 +157,7 @@ const states = reactive({
   uploadMessage: "",
   isUploadingMask: false,
   uploadMessageMask: "",
-  image_url: null,
+  image_url: "/images/3d/teeshirt.webp",
   mask_url: null,
   depth_url: null,
   selectedLight: 0,
@@ -221,32 +221,32 @@ const STORAGE_KEY = '2D_TO_3D'
 
 let model = null
 
-watch(()=>[states.image_url, states.depth_url, states.mask_url], (url)=> {
-  let {image_url, depth_url, mask_url} = states
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({image_url, depth_url, mask_url}))
-}, {deep: true})
+// watch(()=>[states.image_url, states.depth_url, states.mask_url], (url)=> {
+//   let {image_url, depth_url, mask_url} = states
+//   localStorage.setItem(STORAGE_KEY, JSON.stringify({image_url, depth_url, mask_url}))
+// }, {deep: true})
 
-watch(()=>states.smoothness, (val)=> {
-  if(!model) {
-    return
-  }
-  model.children[0].material.roughness = 1 - val
-})
+// watch(()=>states.smoothness, (val)=> {
+//   if(!model) {
+//     return
+//   }
+//   model.children[0].material.roughness = 1 - val
+// })
 
-watch(()=>states.hideLighting, (val)=> {
-  if(!model) {
-    return
-  }
-  model.children[0].visible = !states.hideLighting
-})
-watch(()=>states.scale, (val)=> {
-  if(!model) {
-    return
-  }
-  const camera = useCamera()
-  camera.fov = 160 / states.scale
-  camera.updateProjectionMatrix();
-})
+// watch(()=>states.hideLighting, (val)=> {
+//   if(!model) {
+//     return
+//   }
+//   model.children[0].visible = !states.hideLighting
+// })
+// watch(()=>states.scale, (val)=> {
+//   if(!model) {
+//     return
+//   }
+//   const camera = useCamera()
+//   camera.fov = 160 / states.scale
+//   camera.updateProjectionMatrix();
+// })
 
 async function onFileUpload(files_list) {
   states.isUploading = true
@@ -435,24 +435,24 @@ const M = Math.pow(2, 32)
 // const M = Math.pow(2, 8) - 1
 
 onMounted(async ()=>{
-  const localData = localStorage.getItem(STORAGE_KEY) || '{}'
-  const {image_url, depth_url, mask_url} = JSON.parse(localData)
-  console.log('localData', {image_url, depth_url, mask_url})
-  if(depth_url) {
-    states.depth_url = depth_url
-  }
-  if(image_url) {
-    states.image_url = image_url
-    if(!states.depth_url) {
-      let res = await getDepth(image_url)
-      if(res.result.length) {
-        states.depth_url = res.result[0]
-      }
-    }
-  }
-  if(mask_url) {
-    states.mask_url = mask_url
-  }
+  // const localData = localStorage.getItem(STORAGE_KEY) || '{}'
+  // const {image_url, depth_url, mask_url} = JSON.parse(localData)
+  // console.log('localData', {image_url, depth_url, mask_url})
+  // if(depth_url) {
+  //   states.depth_url = depth_url
+  // }
+  // if(image_url) {
+  //   states.image_url = image_url
+  //   if(!states.depth_url) {
+  //     let res = await getDepth(image_url)
+  //     if(res.result.length) {
+  //       states.depth_url = res.result[0]
+  //     }
+  //   }
+  // }
+  // if(mask_url) {
+  //   states.mask_url = mask_url
+  // }
   await createWorld()
 })
 
@@ -495,6 +495,7 @@ async function loadTexture(url) {
 async function set_surface(image, points, mask) {
   let texture = await loadTexture(image.url);
 
+  console.log('mask', mask) 
   let alphaTexture = await loadTexture(mask.url);
 
   let height = image.height
@@ -545,13 +546,11 @@ async function set_surface(image, points, mask) {
   let sub_mesh = new THREE.Mesh(geometry, sub_material);
   sub_mesh.castShadow = true;
   sub_mesh.receiveShadow = true;
-  sub_mesh.position.z += 0.01
+  sub_mesh.position.z += 0.1
 
 
-  let bg_material = new THREE.MeshStandardMaterial({ map: texture});
+  let bg_material = new THREE.MeshBasicMaterial({ map: texture});
   let bg_mesh = new THREE.Mesh(geometry, bg_material);
-  bg_mesh.castShadow = true;
-  bg_mesh.receiveShadow = true;
 
   // group sub and bg
   let group = new THREE.Group();
@@ -560,60 +559,145 @@ async function set_surface(image, points, mask) {
   return group
 }
 
-async function createWorld() {
-  if(!states.image_url || !states.depth_url || !states.mask_url) {
-    return
+const dx = 0.50
+
+async function cloth_grid(image) {
+  let texture = await loadTexture(image.url);
+  // let height = image.height
+  // let width = image.width
+  let height = 10
+  let width = 10
+
+  const geometry = new THREE.BufferGeometry();
+
+  let vertices = new Float32Array(height * width * 3)
+  let uvs = new Float32Array(height * width * 2)
+  for (let h = 0; h < height ; h++) {
+    for(let w = 0; w < width ; w++) {
+      let x = -1 + w * dx
+      let y = 2
+      let z = -1 + h * dx
+      let i = h * width + w
+      vertices[i * 3] = x
+      vertices[i * 3 + 1] = y
+      vertices[i * 3 + 2] = z
+
+      uvs[i * 2] = w / width
+      uvs[i * 2 + 1] = h / height
+    }
   }
+  // Simulation
+  let h = 5, w = 5;
+  let obs_vertices = new Float32Array(h * w * 3)
+  
+  for(let hh =0; hh < h; hh++) {
+    for(let ww =0; ww < w; ww++) {
+      let x = ww * dx*1
+      let y = 1
+      let z = hh * dx * 1
+      let i = hh * w + ww
+      obs_vertices[i * 3] = x
+      obs_vertices[i * 3 + 1] = y
+      obs_vertices[i * 3 + 2] = z
+    }
+  }
+
+  let obs_face = []
+  for(let hh =0; hh < h - 1; hh++) {
+    for(let ww =0; ww < w - 1; ww++) {
+      let i = hh * w + ww
+      obs_face.push(i, i + w, i + w + 1)
+      obs_face.push(i, i + w + 1, i + 1)
+    }
+  }
+  let obs_faceArray = new Uint32Array(obs_face)
+
+  // if vertices in cloth are not colliding with obstacle face, then move them down
+  // if vertices in cloth are colliding with obstacle face, then move them up at distance min_d from the obstacle face
+  let min_d = 0.01
+  for(let f=0; f<obs_face.length/3; f++) {
+    let pts = [
+      [obs_vertices[obs_face[f*3]*3], obs_vertices[obs_face[f*3]*3+1], obs_vertices[obs_face[f*3]*3+2]],
+      [obs_vertices[obs_face[f*3+1]*3], obs_vertices[obs_face[f*3+1]*3+1], obs_vertices[obs_face[f*3+1]*3+2]],
+      [obs_vertices[obs_face[f*3+2]*3], obs_vertices[obs_face[f*3+2]*3+1], obs_vertices[obs_face[f*3+2]*3+2]],
+    ]
+    let normal = new THREE.Vector3()
+    let v1 = new THREE.Vector3()
+    let v2 = new THREE.Vector3()
+    v1.set(pts[1][0] - pts[0][0], pts[1][1] - pts[0][1], pts[1][2] - pts[0][2])
+    v2.set(pts[2][0] - pts[0][0], pts[2][1] - pts[0][1], pts[2][2] - pts[0][2])
+    normal.crossVectors(v1, v2)
+    normal.normalize()
+    let d = normal.dot(new THREE.Vector3(0, 1, 0))
+    if(d < 0) {
+      normal.multiplyScalar(-1)
+    }
+    for(let i=0; i<vertices.length/3; i++) {
+      let pt = new THREE.Vector3(vertices[i*3], vertices[i*3+1], vertices[i*3+2])
+      let v = pt.sub(new THREE.Vector3(pts[0][0], pts[0][1], pts[0][2]))
+      let dist = v.dot(normal)
+      console.log('dist', dist)
+      if(dist > min_d) {
+        vertices[i*3] += normal.x * (min_d - dist)
+        vertices[i*3+1] += normal.y * (min_d - dist)
+        vertices[i*3+2] += normal.z * (min_d - dist)
+      }
+    }
+  }
+
+
+  let obs_geometry = new THREE.BufferGeometry();
+  obs_geometry.setAttribute('position', new THREE.BufferAttribute(obs_vertices, 3));
+  obs_geometry.setIndex(new THREE.BufferAttribute(obs_faceArray, 1));
+  obs_geometry.computeVertexNormals();
+  let obs_material = new THREE.MeshBasicMaterial({ color: 0xff0000});
+  obs_material.side = THREE.DoubleSide;
+  let obs_mesh = new THREE.Mesh(obs_geometry, obs_material);
+
+
+  let faces = [];
+  for (let i = 0; i < height - 1; i++) {
+      for (let j = 0; j < width - 1; j++) {
+          let index = i * width + j;
+          faces.push(index, index + width, index + width + 1);
+          faces.push(index, index + width + 1, index + 1);
+      }
+  }
+  let facesArray = new Uint32Array(faces);
+
+  geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+  geometry.setIndex(new THREE.BufferAttribute(facesArray, 1));
+  geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+
+  geometry.computeVertexNormals();
+
+
+  // let material = new THREE.MeshBasicMaterial({ map: texture});
+  let material = new THREE.MeshBasicMaterial({ color: 0x00ff00});
+  material.side = THREE.DoubleSide;
+  let mesh = new THREE.Mesh(geometry, material);
+
+  console.log('mesh', mesh)
+
+  // group cloth and obstacle
+  let group = new THREE.Group();
+  group.add(mesh);
+  group.add(obs_mesh);
+
+  return group
+}
+
+async function createWorld() {
   const scene = useScene()
   // let depth_data = await get_image_data(`/images/3d/${name}_depth_32.png`)
   let [image, image_data] = await get_image_data(states.image_url)
-  let [depth, depth_data] = await get_image_data(states.depth_url, image_data.width, image_data.height)
-  let [mask, mask_data] = await get_image_data(states.mask_url, image_data.width, image_data.height)
-
-  console.log('depth_data', depth_data)
-
-  let depth_u8 = new jsfeat.matrix_t(depth_data.height, depth_data.width, jsfeat.U8_t | jsfeat.C1_t);
-  jsfeat.imgproc.grayscale(depth_data.data, depth_data.height, depth_data.width, depth_u8);
 
 
-  let depth_u32;
-  if(mode == 'F32') {
-    depth_u32 = get_depth_32(depth_data)
-    let options = {
-      radius: 2,
-      sigma: 2
-    };
-    let r = options.radius|0;
-    let kernel_size = (r+1) << 1;
-    console.log('kernel_size', kernel_size) 
-    jsfeat.imgproc.gaussian_blur(depth_u32, depth_u32, kernel_size, options.sigma);
-  } else {
-    let options = {
-      radius: 1,
-      sigma: 1
-    };
-    let r = options.radius|0;
-    let kernel_size = (r+1) << 1;
-    // console.log('kernel_size', kernel_size) 
-    // jsfeat.imgproc.gaussian_blur(depth_u8, depth_u8, kernel_size, options.sigma);
-    depth_u32 = get_depth_32(depth_u8)
-  }
-
-  // Sample array of 3D points
-  const [points, colors, sizes, corner_min, corner_max] = depth_to_3d(depth_u32, image_data);
-  // console.log('corner_min', corner_min)
-  // console.log('corner_max', corner_max)
-
-  states.scene_width = corner_max.x
-  states.scene_height = corner_max.y
-  // const model = set_point_cloud(points, colors, sizes)
-  model = await set_surface(image, points, mask)
-  model.position.set(0, 0, 150)
-
+  const model = await cloth_grid(image)
   scene.add(model);
 
 
-  // orbitController = useOrbitControl()
+  orbitController = useOrbitControl()
   const camera = useCamera()
 
   // orbitController.attach(camera)
@@ -623,7 +707,7 @@ async function createWorld() {
 
   // scene.add(transformController)
 
-  camera.position.set(0, 0, 150)
+  camera.position.set(0, 0, 10)
 
 }
 
