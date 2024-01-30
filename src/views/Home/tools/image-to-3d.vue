@@ -28,7 +28,7 @@
     <three-js>
       <!-- <point-light :x="states.x" :y="states.y" :z="states.z"/> -->
       <!-- <ambient-light/> -->
-      <grid-helper/>
+      <!-- <grid-helper/> -->
       <!-- <basic-cube :position="{x: 0, y: 0, z: 4}"/> -->
       <animation-loop :frame="onFrame"/>
     </three-js>
