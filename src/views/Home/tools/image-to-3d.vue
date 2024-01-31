@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div style="display: flex; align-items: center; justify-content: center;">
     <connect />
     <div class="menu-container">
       <uploader-simple
@@ -15,22 +15,27 @@
         <v-slider
           v-model="states.scale"
           :min="0"
-          :max="3"
+          :max="10"
           step="0.01"
           thumb-label
           label="Scale"/>
         <v-select label="Render" v-model="states.render_mode" :items="['point_cloud', 'surface']"></v-select>
-        <v-btn @click="saveRender" color="black">Download</v-btn>
+        <v-btn @click="saveRender" color="black">Download image</v-btn>
 
         <v-card text="Use scroll to move camera forward/backward. Use two fingure press to pan." class="mt-3" />
       </div>
+    </div>
+    <div class="menu-container" style="left: unset; right: 10px;">
+      <v-btn v-show="states.isAnimationRunning" @click="previewRender" color="red">Stop</v-btn>
+      <v-btn v-show="!states.isAnimationRunning" @click="previewRender" color="black">Preview animation</v-btn>
+      <v-btn @click="saveVideoRender" color="black" :disabled="states.isDownloading">Download video</v-btn>
     </div>
     <three-js>
       <!-- <point-light :x="states.x" :y="states.y" :z="states.z"/> -->
       <!-- <ambient-light/> -->
       <!-- <grid-helper/> -->
       <!-- <basic-cube :position="{x: 0, y: 0, z: 4}"/> -->
-      <animation-loop :frame="onFrame"/>
+      <animation-loop :on-frame="onFrame" :autostart="false" ref="animationEl"/>
     </three-js>
   </div>
 </template>
@@ -64,11 +69,14 @@ const states = reactive({
   x:0,
   y:0,
   z:10,
-  scale: 1,
-  render_mode: 'point_cloud',
+  scale: 3,
+  render_mode: 'surface',
+  isAnimationRunning: false,
+  isDownloading: false,
 })
 
 const uploadEl = ref(null)
+const animationEl = ref(null)
 
 const STORAGE_KEY = '2D_TO_3D'
 let model;
@@ -104,6 +112,14 @@ async function onFileUpload(files_list) {
   states.isUploading = true
   states.uploadMessage = "Uploading image..."
   const files = [files_list[0]]
+
+  const dim = await getImageDimension(files[0])
+
+
+  if(dim.width * dim.height > 1024 * 1024) {
+    alert('Image size is too large. Please upload image with size less than 1024x1024')
+    return
+  }
 
   const instance_id = Math.floor(Math.random() * 89999 + 10000).toString()
   const instance_url = `depth-2d-to-3d/${instance_id}.png`
@@ -141,8 +157,6 @@ async function get_image_data(url, width, height) {
   const ctx = canvas.getContext('2d')
 
   const image = await getImageFromUrl(url);
-  console.log('image', image)
-
   width = width || image.width
   height = height || image.height
 
@@ -192,7 +206,7 @@ function depth_to_3d(depth_data, image_data) {
   const sizes = []
   let ox = 1.0 * image_data.width / 2
   let oy = 1.0 * image_data.height / 2
-  let f = 0.005
+  let f = 0.001
 
   let corner_min = new THREE.Vector3(0, 0, 0)
   let corner_max = new THREE.Vector3(image_data.width, image_data.height, 0)
@@ -375,7 +389,9 @@ async function createWorld() {
   if(!states.image_url || !states.depth_url) {
     return
   }
+  const camera = useCamera()
   const scene = useScene()
+  const renderer = useRenderer()
   // let depth_data = await get_image_data(`/images/3d/${name}_depth_32.png`)
   let [image, image_data] = await get_image_data(states.image_url)
   let [depth, depth_data] = await get_image_data(states.depth_url, image_data.width, image_data.height)
@@ -430,6 +446,24 @@ async function createWorld() {
   // console.log('corner_min', corner_min)
   // console.log('corner_max', corner_max)
 
+  let w = window.innerWidth
+  let h = w * image.height / image.width
+
+  if(w > window.innerWidth) {
+    w = window.innerWidth
+    h = w * image.height / image.width
+  }
+  if(h > window.innerHeight) {
+    h = window.innerHeight
+    w = h * image.width / image.height
+  }
+  camera.aspect = w/h
+  camera.fov = 160 / states.scale
+  // states.scale = 160 / camera.fov
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h);
+
+
   if(states.render_mode == 'point_cloud') {
     model = set_point_cloud(points, colors, sizes)
   } else {
@@ -441,7 +475,6 @@ async function createWorld() {
 
 
   orbitController = useOrbitControl()
-  const camera = useCamera()
 
   // orbitController.attach(camera)
   // const transformController = useTransformControl()
@@ -452,14 +485,22 @@ async function createWorld() {
 
   camera.position.set(0, 0, 50)
 }
+function singleFrame() {
+  const camera = useCamera()
+  camera.position.z -= 0.1
+  if(camera.position.z < 0) {
+    return true
+  }
+  return false
+}
 
 function onFrame(e) {
-  // const scene = useScene()
-  // const renderer = useRenderer()
-  // if(!orbitController) return
-  // orbitController.update()
-  // // manager.update()
-  // renderer.render(scene, camera)
+  const camera = useCamera()
+  let is_done = singleFrame()
+  if(is_done && states.isAnimationRunning) {
+    // stop animation
+    camera.position.z = 50
+  }
 }
 onBeforeUnmount(()=> {
   const scene = useScene()
@@ -470,6 +511,51 @@ async function saveRender() {
   const canvas = renderer.domElement
   const dataUrl = canvas.toDataURL('image/png')
   await downloadImage(dataUrl, 'saquib-sh-3d.png')
+}
+async function saveVideoRender() {
+  states.isDownloading = true
+  const renderer = useRenderer()
+  const canvas = renderer.domElement
+
+  let chunks = [];
+  let canvas_stream = canvas.captureStream(30); // fps
+  // Create media recorder from canvas stream
+  let media_recorder = new MediaRecorder(canvas_stream, { mimeType: "video/webm; codecs=vp9" });
+  media_recorder.ondataavailable = (evt) => { chunks.push(evt.data); };
+
+  media_recorder.onstop = async (evt) => {
+    let blob = new Blob(chunks, { type: "video/webm" });
+    let url = URL.createObjectURL(blob);
+    // download blob as webm file
+    await downloadImage(url, 'saquib-sh-3d.webm')
+  };
+
+  const camera = useCamera()
+  camera.position.set(0, 0, 50)
+  camera.lookAt(0, 0, 0)
+
+  media_recorder.start();
+  animationEl.value.start()
+
+  while(camera.position.z > 0) {
+    await sleep(10)
+  }
+  animationEl.value.stop()
+  media_recorder.stop();
+  states.isDownloading = false
+}
+async function previewRender() {
+  if(states.isAnimationRunning) {
+    console.log('stop animation', animationEl.value)
+    animationEl.value.stop()
+    states.isAnimationRunning = false
+    return
+  }
+  states.isAnimationRunning = true
+  const camera = useCamera()
+  camera.position.set(0, 0, 50)
+  camera.lookAt(0, 0, 0)
+  animationEl.value.start()
 }
 </script>
 
@@ -483,5 +569,6 @@ async function saveRender() {
   background: rgba(0,0,0,0.1);
   padding: 10px;
   border-radius: 10px;
+  gap: 10px;
 }
 </style>

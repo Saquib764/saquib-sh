@@ -1,7 +1,7 @@
 <template>
   <div
     ref="holder" 
-    class="scene" style="width: 100vw; height: 100vh">
+    class="scene">
     <slot v-if="isReady"></slot>
   </div>
 </template>
