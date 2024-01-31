@@ -487,7 +487,9 @@ async function createWorld() {
 }
 function singleFrame() {
   const camera = useCamera()
-  camera.position.z -= 0.1
+  camera.position.z -= 0.35
+  camera.fov += 0.06
+  camera.updateProjectionMatrix();
   if(camera.position.z < 0) {
     return true
   }
@@ -500,6 +502,8 @@ function onFrame(e) {
   if(is_done && states.isAnimationRunning) {
     // stop animation
     camera.position.z = 50
+    camera.fov = 160 / states.scale
+    camera.updateProjectionMatrix();
   }
 }
 onBeforeUnmount(()=> {
