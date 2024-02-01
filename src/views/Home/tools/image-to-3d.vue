@@ -116,8 +116,8 @@ async function onFileUpload(files_list) {
   const dim = await getImageDimension(files[0])
 
 
-  if(dim.width * dim.height > 1024 * 1024) {
-    alert('Image size is too large. Please upload image with size less than 1024x1024')
+  if(dim.width * dim.height > 1920 * 1920) {
+    alert('Image size is too large. Please upload image with size less than 1920x1920')
     return
   }
 
