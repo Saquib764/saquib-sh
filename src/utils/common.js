@@ -89,6 +89,17 @@ export const sleep = (time) => {
     setTimeout(resolve, time)
   })
 }
+export const readAsFile = (url, filename) => {
+  return new Promise((resolve, reject)=>{
+    fetch(url)
+    .then(res => res.blob())
+    .then(blob => {
+      const file = new File([blob], filename, {type: blob.type})
+      resolve(file)
+    })
+  }
+)}
+
 export const readAsDataUrl = (file) => {
   return new Promise((resolve, reject)=>{
     const reader = new FileReader();

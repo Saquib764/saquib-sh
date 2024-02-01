@@ -1,7 +1,7 @@
 <template>
-  <div style="display: flex; align-items: center; justify-content: center;">
+  <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
     <connect />
-    <div class="menu-container">
+    <div class="menu-container" style="left: unset; right: 20px; top: 20px;">
       <uploader-simple
         ref="uploadEl"
         label="Upload scene"
@@ -10,7 +10,6 @@
         style="width: unset; max-width: 200px; background: rgba(181, 197, 207, 0.3);"
         :is-uploading="states.isUploading"
         :uploadMessage="states.uploadMessage" />
-      <img :src="states.depth_url" style="width: 100px; height: 100px; object-fit: contain;"/>
       <div style="width: 200px;" class="mb-3">
         <v-slider
           v-model="states.scale"
@@ -19,24 +18,49 @@
           step="0.01"
           thumb-label
           label="Scale"/>
+        <v-slider
+          v-model="states.sensitivity"
+          :min="-1"
+          :max="1"
+          step="0.01"
+          thumb-label
+          label="Sensitivity"/>
         <v-select label="Render" v-model="states.render_mode" :items="['point_cloud', 'surface']"></v-select>
-        <v-btn @click="saveRender" color="black">Download image</v-btn>
-
-        <v-card text="Use scroll to move camera forward/backward. Use two finger press to pan." class="mt-3" />
+        <v-btn color="black" @click="states.showEmbedDialog = true">Embedd</v-btn>
       </div>
     </div>
-    <div class="menu-container" style="left: unset; right: 10px;">
-      <v-btn v-show="states.isAnimationRunning" @click="previewRender" color="red">Stop</v-btn>
-      <v-btn v-show="!states.isAnimationRunning" @click="previewRender" color="black">Preview animation</v-btn>
-      <v-btn @click="saveVideoRender" color="black" :disabled="states.isDownloading">Download video</v-btn>
-    </div>
-    <three-js>
+    <three-js style="width: 100vw; height: 100vh;">
       <!-- <point-light :x="states.x" :y="states.y" :z="states.z"/> -->
       <!-- <ambient-light/> -->
       <!-- <grid-helper/> -->
       <!-- <basic-cube :position="{x: 0, y: 0, z: 4}"/> -->
       <animation-loop :on-frame="onFrame" :autostart="false" ref="animationEl"/>
     </three-js>
+    
+
+    <v-dialog
+      v-model="states.showEmbedDialog"
+      width="700px" style="z-index: 5000;">
+      <v-card>
+        <v-card-title>Copy embedding code</v-card-title>
+        <v-card-text>
+          <p>Copy the following code and paste it in your website at the end. Make sure the background of you home page is transparent.</p>
+        </v-card-text>
+          <code style="padding: 10px; border-radius: 10px; background: rgba(181, 197, 207, 0.3); margin: 20px">
+            {{ get_embedding_code(states.image_url, states.depth_url, states.scale, states.sensitivity, states.render_mode) }}
+          </code>
+        <v-card-actions>
+          <v-btn
+            prepend-icon="mdi-content-copy" 
+            variant="tonal"
+            :color="states.isCopied?'success': 'primary'" @click="copyToClipboard">Copy</v-btn>
+          <v-btn
+            prepend-icon="mdi-close"
+            variant="tonal"
+            color="primary" @click="states.showEmbedDialog = false">Close</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -58,7 +82,39 @@ import { ref as Ref, uploadBytes, getDownloadURL, getBlob } from "firebase/stora
 import {  BASE_API, ENV } from '@/constants';
 import { downloadImage, isMobile, sleep, getImageDimension } from "@/utils/common"
 import Connect from '@/components/Footers/Connect.vue'
-import { readAsFile } from '../../../utils/common';
+
+function get_embedding_code(image_url, depth_url, scale, sensitivity, render_mode) {
+  states.isCopied = false
+  let tag = 'sc' + 'ript'
+  return `
+    <${tag} src="https://cdn.jsdelivr.net/gh/Saquib764/interactive-background@main/js/index.min.js"></${tag}>
+    <${tag}>
+      document.addEventListener("DOMContentLoaded", function() {
+
+        const image_url = '${image_url}';
+        const depth_url = '${depth_url}';
+
+        const scale = ${scale};
+        const sensitivity = ${sensitivity};
+        const render_mode = '${render_mode}';
+
+        const parent = document.createElement('div');
+        let style = {
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          overflow: 'hidden',
+          zIndex: -1,
+        };
+        Object.assign(parent.style, style);
+        init(parent, image_url, depth_url, scale, sensitivity, render_mode);
+        document.body.appendChild(parent);
+      });
+    </${tag}>
+  `.trim()
+}
 
 const states = reactive({
   height: 100,
@@ -71,9 +127,12 @@ const states = reactive({
   y:0,
   z:10,
   scale: 3,
+  sensitivity: 0.1,
   render_mode: 'surface',
   isAnimationRunning: false,
   isDownloading: false,
+  showEmbedDialog: false,
+  isCopied: false
 })
 
 const uploadEl = ref(null)
@@ -107,6 +166,16 @@ watch(()=>states.render_mode, (val)=> {
   const scene = useScene()
   createWorld()
 })
+
+function copyToClipboard() {
+  const el = document.createElement('textarea');
+  el.value = get_embedding_code(states.image_url, states.depth_url, states.scale, states.sensitivity, states.render_mode);
+  document.body.appendChild(el);
+  el.select();
+  document.execCommand('copy');
+  document.body.removeChild(el);
+  states.isCopied = true
+}
 
 async function onFileUpload(files_list) {
   states.isUploading = true
@@ -189,8 +258,6 @@ function get_min_max(depth_data) {
   return [min, max]
 }
 
-
-
 function get_depth_32(depth_data){
   const width = depth_data.width || depth_data.cols
   const height = depth_data.height || depth_data.rows
@@ -204,6 +271,22 @@ function get_depth_32(depth_data){
     }
   }
   return depth
+}
+
+function onMouseMove(e) {
+  if(!model) {
+    return
+  }
+
+  // compute x and w with respect to window
+  let x = e.clientX
+  let y = e.clientY
+
+  x = x / window.innerWidth - 0.5
+  y = - (y / window.innerHeight - 0.5)
+
+  model.rotation.x = 0.1 * states.sensitivity * y * Math.PI
+  model.rotation.y = -0.1 * states.sensitivity * x * Math.PI
 }
 
 
@@ -257,7 +340,7 @@ function depth_to_3d(depth_data, image_data) {
     }
 
     colors.push(image_data.data[i * 4]/255.0, image_data.data[i * 4 + 1]/255.0, image_data.data[i * 4 + 2]/255.0)
-    sizes.push(Math.abs(30*f*z))
+    sizes.push(Math.abs(200*f*z))
   }
   return [points, colors, sizes, corner_min, corner_max]
 }
@@ -284,9 +367,8 @@ void main() {
 
 let orbitController = null
 
-
-
 onMounted(async ()=>{
+  window.addEventListener('mousemove', onMouseMove)
   const localData = localStorage.getItem(STORAGE_KEY) || '{}'
   const {image_url, depth_url} = JSON.parse(localData)
   console.log('localData', {image_url, depth_url})
@@ -456,35 +538,25 @@ async function createWorld() {
   // console.log('corner_min', corner_min)
   // console.log('corner_max', corner_max)
 
-  let w = window.innerWidth
-  let h = w * image.height / image.width
-
-  if(w > window.innerWidth) {
-    w = window.innerWidth
-    h = w * image.height / image.width
-  }
-  if(h > window.innerHeight) {
-    h = window.innerHeight
-    w = h * image.width / image.height
-  }
-  camera.aspect = w/h
   camera.fov = 160 / states.scale
-  // states.scale = 160 / camera.fov
   camera.updateProjectionMatrix();
-  renderer.setSize(w, h);
 
-
+  let m
   if(states.render_mode == 'point_cloud') {
-    model = set_point_cloud(points, colors, sizes)
+    m = set_point_cloud(points, colors, sizes)
   } else {
-    model = await set_surface(image, points)
+    m = await set_surface(image, points)
   }
-  model.position.set(0, 0, 50)
+  let z = (corner_max.z + corner_min.z) / 2
+  m.position.set(0, 0, z)
+  model = new THREE.Group()
+  model.add(m)
+  model.position.set(0, 0, 50 - z)
 
   scene.add(model);
 
 
-  orbitController = useOrbitControl()
+  // orbitController = useOrbitControl()
 
   // orbitController.attach(camera)
   // const transformController = useTransformControl()
@@ -519,58 +591,9 @@ function onFrame(e) {
 onBeforeUnmount(()=> {
   const scene = useScene()
   scene.remove(model)
+  window.removeEventListener('mousemove', onMouseMove)
 })
-async function saveRender() {
-  const renderer = useRenderer()
-  const canvas = renderer.domElement
-  const dataUrl = canvas.toDataURL('image/png')
-  await downloadImage(dataUrl, 'saquib-sh-3d.png')
-}
-async function saveVideoRender() {
-  states.isDownloading = true
-  const renderer = useRenderer()
-  const canvas = renderer.domElement
 
-  let chunks = [];
-  let canvas_stream = canvas.captureStream(30); // fps
-  // Create media recorder from canvas stream
-  let media_recorder = new MediaRecorder(canvas_stream, { mimeType: "video/webm; codecs=vp9" });
-  media_recorder.ondataavailable = (evt) => { chunks.push(evt.data); };
-
-  media_recorder.onstop = async (evt) => {
-    let blob = new Blob(chunks, { type: "video/webm" });
-    let url = URL.createObjectURL(blob);
-    // download blob as webm file
-    await downloadImage(url, 'saquib-sh-3d.webm')
-  };
-
-  const camera = useCamera()
-  camera.position.set(0, 0, 50)
-  camera.lookAt(0, 0, 0)
-
-  media_recorder.start();
-  animationEl.value.start()
-
-  while(camera.position.z > 0) {
-    await sleep(10)
-  }
-  animationEl.value.stop()
-  media_recorder.stop();
-  states.isDownloading = false
-}
-async function previewRender() {
-  if(states.isAnimationRunning) {
-    console.log('stop animation', animationEl.value)
-    animationEl.value.stop()
-    states.isAnimationRunning = false
-    return
-  }
-  states.isAnimationRunning = true
-  const camera = useCamera()
-  camera.position.set(0, 0, 50)
-  camera.lookAt(0, 0, 0)
-  animationEl.value.start()
-}
 </script>
 
 <style scoped lang="scss">
@@ -580,7 +603,7 @@ async function previewRender() {
   position: absolute;
   top: 10px;
   left: 10px;
-  background: rgba(0,0,0,0.1);
+  background: rgba(255, 255, 255, 0.556);
   padding: 10px;
   border-radius: 10px;
   gap: 10px;

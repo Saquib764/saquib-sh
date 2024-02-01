@@ -16,10 +16,6 @@ const emit = defineEmits(['ready'])
 // import { useEvents } from '@/engine'
 
 
-// const events = useEvents()
-// events.loadController()
-
-
 const holder  = ref(null)
 const isReady = ref(false)
 
@@ -27,8 +23,6 @@ const state = reactive({
   height: 100,
   width: 100
 })
-
-// events.attach(renderer.domElement, scene, camera)
 
 let loopId = null
     
