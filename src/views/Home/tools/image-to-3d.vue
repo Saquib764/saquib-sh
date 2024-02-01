@@ -104,7 +104,6 @@ watch(()=>states.render_mode, (val)=> {
     return
   }
   const scene = useScene()
-  scene.remove(model)
   createWorld()
 })
 
@@ -392,6 +391,9 @@ async function createWorld() {
   const camera = useCamera()
   const scene = useScene()
   const renderer = useRenderer()
+  if(model) {
+    scene.remove(model)
+  }
   // let depth_data = await get_image_data(`/images/3d/${name}_depth_32.png`)
   let [image, image_data] = await get_image_data(states.image_url)
   let [depth, depth_data] = await get_image_data(states.depth_url, image_data.width, image_data.height)
