@@ -132,7 +132,7 @@ const states = reactive({
   x:0,
   y:0,
   z:10,
-  scale: 3,
+  scale: 4.5,
   sensitivity: 0.1,
   render_mode: 'surface',
   isAnimationRunning: false,
