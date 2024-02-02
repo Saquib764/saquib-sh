@@ -174,12 +174,8 @@ watch(()=>states.render_mode, (val)=> {
 })
 
 function copyToClipboard() {
-  const el = document.createElement('textarea');
-  el.value = get_embedding_code(states.image_url, states.depth_url, states.scale, states.sensitivity, states.render_mode);
-  document.body.appendChild(el);
-  el.select();
-  document.execCommand('copy');
-  document.body.removeChild(el);
+  const v = get_embedding_code(states.image_url, states.depth_url, states.scale, states.sensitivity, states.render_mode);
+  navigator.clipboard.writeText(v)
   states.isCopied = true
 }
 
