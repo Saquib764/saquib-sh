@@ -29,7 +29,7 @@
         <v-btn color="black" @click="states.showEmbedDialog = true">Embedd</v-btn>
       </div>
     </div>
-    <three-js style="width: 100vw; height: 100vh;">
+    <three-js style="width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: -1;">
       <!-- <point-light :x="states.x" :y="states.y" :z="states.z"/> -->
       <!-- <ambient-light/> -->
       <!-- <grid-helper/> -->
@@ -37,7 +37,13 @@
       <animation-loop :on-frame="onFrame" :autostart="false" ref="animationEl"/>
     </three-js>
     
-
+    <div style="height: 100vh; width: 100vw; display: flex; justify-content: start; align-items: start; padding: 10vh; padding-top: 30vh; flex-direction: column;">
+      <span style="font-weight: bold; font-size: 4em; color: rgb(31, 30, 30);">Interactive background creator</span>
+      <span style="font-weight: bold; font-size: 1em; color: rgb(46, 45, 45);">Upload a scene, adjust the scale and mouse sensitivity. Then copy the embedd code.</span>
+    </div>
+    <div style="height: 100vh; width: 100vw; font-size: 3em; display: flex; justify-content: start; align-items: center;">
+      <span>Section 2</span>
+    </div>
     <v-dialog
       v-model="states.showEmbedDialog"
       width="700px" style="z-index: 5000;">
