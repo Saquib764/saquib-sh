@@ -3,7 +3,7 @@
     <span style="margin-top: 50px; font-size: 90px;">Saquib Alam</span>
     <span>co-founder at <a href="https://photoshift.co">photoshift.co</a></span>
     <p>
-      Hi there, I am a physicist turned software engineer. I am passionate about building products that solve real world problems. I am currently working on Zust.ai, a generative AI platform for product photography.
+      Hi there, I am a physicist turned software engineer. I am passionate about building products that solve real world problems. I am currently working on zust.ai and photoshift.co, a generative AI platform for product photography.
     </p>
     <p>We are building photoshift.co as a remote first company, while slow traveling around India.</p>
     <div class="social">
