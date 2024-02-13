@@ -110,7 +110,7 @@ function get_embedding_code(image_url, depth_url, scale, sensitivity, render_mod
   states.isCopied = false
   let tag = 'sc' + 'ript'
   return `
-    <${tag} src="https://cdn.jsdelivr.net/gh/Saquib764/interactive-background@main/js/index.min.js"></${tag}>
+    <${tag} src="https://cdn.jsdelivr.net/gh/Saquib764/interactive-background@v0.01/js/index.min.js"></${tag}>
     <${tag}>
       document.addEventListener("DOMContentLoaded", function() {
 
