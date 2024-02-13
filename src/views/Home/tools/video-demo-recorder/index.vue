@@ -338,7 +338,7 @@ async function clearRecordings() {
 
 onMounted(async ()=>{
   getAudioInputs()
-  await toggleCamera()
+  // await toggleCamera()
   await toggleMicrophone()
 
   let recordings = await db.getItem('recordings') || []

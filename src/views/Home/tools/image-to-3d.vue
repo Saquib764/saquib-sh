@@ -19,6 +19,20 @@
           step="0.01"
           thumb-label
           label="Scale"/>
+        <v-slider
+          v-model="states.focus"
+          :min="0"
+          :max="1000"
+          step="0.01"
+          thumb-label
+          label="Focus"/>
+        <v-slider
+          v-model="states.aperture"
+          :min="0"
+          :max="10"
+          step="0.01"
+          thumb-label
+          label="Aperture"/>
         <v-select label="Render" v-model="states.render_mode" :items="['point_cloud', 'surface']"></v-select>
         <v-btn @click="saveRender" color="black">Download image</v-btn>
 
@@ -30,7 +44,8 @@
       <v-btn v-show="!states.isAnimationRunning" @click="previewRender" color="black">Preview animation</v-btn>
       <v-btn @click="saveVideoRender" color="black" :disabled="states.isDownloading">Download video</v-btn>
     </div>
-    <three-js>
+    <three-js @mousemove="onMouseMove" use-composer>
+      <bokeh :focus="states.focus" :aperture="states.aperture" />
       <!-- <point-light :x="states.x" :y="states.y" :z="states.z"/> -->
       <!-- <ambient-light/> -->
       <!-- <grid-helper/> -->
@@ -45,6 +60,7 @@ import { ref, watch, reactive, onMounted } from 'vue'
 import * as THREE from 'three'
 import jsfeat from 'jsfeat'
 import ThreeJs from '@/components/ThreeJs.vue';
+import Bokeh from '@/components/Bokeh.vue';
 import BasicCube from '@/components/BasicCube.vue';
 import AnimationLoop from '@/components/AnimationLoop.vue';
 import AmbientLight from '@/components/AmbientLight.vue';
@@ -71,6 +87,9 @@ const states = reactive({
   y:0,
   z:10,
   scale: 3,
+  sensitivity: 1,
+  focus: 100,
+  aperture: 0,
   render_mode: 'surface',
   isAnimationRunning: false,
   isDownloading: false,
@@ -158,6 +177,22 @@ async function getDepth(url) {
   const data = await res.json()
   return data
 }
+function onMouseMove(e) {
+  if(!model) {
+    return
+  }
+
+  // compute x and w with respect to window
+  let x = e.clientX
+  let y = e.clientY
+
+  x = x / window.innerWidth - 0.5
+  y = - (y / window.innerHeight - 0.5)
+
+  model.rotation.x = 0.1 * states.sensitivity * y * Math.PI
+  model.rotation.y = -0.1 * states.sensitivity * x * Math.PI
+}
+
 
 async function get_image_data(url, width, height) {
   const canvas = document.createElement('canvas')
@@ -283,6 +318,7 @@ void main() {
 `
 
 let orbitController = null
+let transformController = null
 
 
 
@@ -474,24 +510,27 @@ async function createWorld() {
   renderer.setSize(w, h);
 
 
+  let m
   if(states.render_mode == 'point_cloud') {
-    model = set_point_cloud(points, colors, sizes)
+    m = set_point_cloud(points, colors, sizes)
   } else {
-    model = await set_surface(image, points)
+    m = await set_surface(image, points)
   }
-  model.position.set(0, 0, 50)
+  let z = (corner_max.z + corner_min.z) / 2
+  m.position.set(0, 0, z)
+  model = new THREE.Group()
+  model.add(m)
+  model.position.set(0, 0, 50 - z)
 
   scene.add(model);
 
 
-  orbitController = useOrbitControl()
+  // orbitController = useOrbitControl()
 
   // orbitController.attach(camera)
-  // const transformController = useTransformControl()
+  // transformController = useTransformControl()
 
-  // transformController.attach(pointCloud)
-
-  // scene.add(transformController)
+  // transformController.attach(model)
 
   camera.position.set(0, 0, 50)
 }

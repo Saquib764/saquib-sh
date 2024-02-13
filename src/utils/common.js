@@ -310,6 +310,40 @@ export async function createVideoThumbnail(video_url) {
   return thumbnail
 } 
 
+export function getVideoMeta(video_url) {
+  const video = document.createElement('video');
+  video.src = video_url;
+  video.crossOrigin = "anonymous";
+  video.muted = true
+  video.autoplay = false
+  video.loop = false
+  video.playsinline = false
+  video.controls = false
+  video.style.position = 'absolute'
+  video.style.top = '0px'
+  video.style.left = '0px'
+  video.style.width = '100%'
+  video.style.height = '100%'
+  video.style.objectFit = 'cover'
+  video.style.zIndex = '1'
+  video.style.opacity = '0'
+  video.style.pointerEvents = 'none'
+  video.style.visibility = 'hidden'
+  video.style.display = 'none'
+  document.body.appendChild(video)
+  return new Promise((resolve, reject)=>{
+    video.onloadedmetadata = (e) => {
+      resolve({
+        width: video.videoWidth,
+        height: video.videoHeight,
+        duration: video.duration
+      })
+    }
+    video.play()
+  })
+
+}
+
 export const windowCopy = _windowCopy
 export const locationCopy = _locationCopy
 export const copyNavigator = _copyNavigator

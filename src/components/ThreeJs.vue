@@ -1,7 +1,7 @@
 <template>
   <div
     ref="holder" 
-    class="scene">
+    class="three-js">
     <slot v-if="isReady"></slot>
   </div>
 </template>
@@ -19,12 +19,29 @@ const emit = defineEmits(['ready'])
 const holder  = ref(null)
 const isReady = ref(false)
 
-const state = reactive({
+const props = defineProps({
+  useComposer: {
+    type: Boolean,
+    default: false
+  }
+})
+
+const states = reactive({
   height: 100,
   width: 100
 })
 
 let loopId = null
+let resize = null
+
+function onResize(e) {
+  states.height = holder.value.clientHeight
+  states.width = holder.value.clientWidth
+}
+
+watch(()=>[states.height, states.width], ()=>{
+  resizeRenderer( states.width, states.height)
+}, {deep: true})
     
 onMounted( async() => {
   const scene = useScene()
@@ -34,31 +51,37 @@ onMounted( async() => {
   
   holder.value.append(renderer.domElement)
   await sleep(30)
-  state.height = holder.value.clientHeight
-  state.width = holder.value.clientWidth
+  states.height = holder.value.clientHeight
+  states.width = holder.value.clientWidth
 
-  camera.aspect = state.width / state.height 
+  camera.aspect = states.width / states.height 
 
   camera.updateProjectionMatrix()
   renderer.setPixelRatio(window.devicePixelRatio)
-  renderer.setSize( state.width, state.height)
+  renderer.setSize( states.width, states.height)
 
-  renderer.render(scene, camera)
+  console.log(states.width, states.height)
 
+  if(props.useComposer) {
+    const composer = useComposer()
+    // composer.setSize(states.width, states.height)
+  }
+
+
+  applyRender()
   loop()
   isReady.value = true
   emit('ready')
+  
+  resize = new ResizeObserver(onResize).observe(holder.value)
 })
 onBeforeUnmount(()=> {
   dispose()
+  resize.disconnect()
   window.cancelAnimationFrame(loopId)
 })
 function loop() {
-  const scene = useScene()
-  const renderer = useRenderer()
-  const camera = useCamera()
-
-  renderer.render(scene, camera)
+  applyRender()
   loopId = window.requestAnimationFrame(loop)
 }
 </script>

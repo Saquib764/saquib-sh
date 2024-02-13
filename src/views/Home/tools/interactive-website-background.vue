@@ -25,11 +25,27 @@
           step="0.01"
           thumb-label
           label="Sensitivity"/>
+        <v-slider
+          v-model="states.focus"
+          :min="0"
+          :max="1000"
+          step="0.01"
+          thumb-label
+          label="Focus"/>
+        <v-slider
+          v-model="states.aperture"
+          :min="0"
+          :max="10"
+          step="0.01"
+          thumb-label
+          label="Aperture"/>
         <v-select label="Render" v-model="states.render_mode" :items="['point_cloud', 'surface']"></v-select>
         <v-btn color="black" @click="states.showEmbedDialog = true">Embedd</v-btn>
       </div>
     </div>
-    <three-js style="width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: -1;">
+    <three-js use-composer
+      style="width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: -1;">
+      <bokeh :focus="states.focus" :aperture="states.aperture" />
       <!-- <point-light :x="states.x" :y="states.y" :z="states.z"/> -->
       <!-- <ambient-light/> -->
       <!-- <grid-helper/> -->
@@ -75,6 +91,7 @@ import { ref, watch, reactive, onMounted } from 'vue'
 import * as THREE from 'three'
 import jsfeat from 'jsfeat'
 import ThreeJs from '@/components/ThreeJs.vue';
+import Bokeh from '@/components/Bokeh.vue';
 import BasicCube from '@/components/BasicCube.vue';
 import AnimationLoop from '@/components/AnimationLoop.vue';
 import AmbientLight from '@/components/AmbientLight.vue';
@@ -134,6 +151,8 @@ const states = reactive({
   z:10,
   scale: 4.5,
   sensitivity: 0.1,
+  focus: 100,
+  aperture: 0,
   render_mode: 'surface',
   isAnimationRunning: false,
   isDownloading: false,
@@ -506,8 +525,6 @@ async function createWorld() {
   //   M = Math.pow(2, 32) 
   // }
 
-  console.log('depth_data', depth_data)
-
   let depth_u8 = new jsfeat.matrix_t(depth_data.height, depth_data.width, jsfeat.U8_t | jsfeat.C1_t);
   jsfeat.imgproc.grayscale(depth_data.data, depth_data.height, depth_data.width, depth_u8);
 
@@ -521,7 +538,6 @@ async function createWorld() {
     };
     let r = options.radius|0;
     let kernel_size = (r+1) << 1;
-    console.log('kernel_size', kernel_size) 
     // jsfeat.imgproc.gaussian_blur(depth_u32, depth_u32, kernel_size, options.sigma);
   } else {
     let options = {

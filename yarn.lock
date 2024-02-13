@@ -3248,6 +3248,11 @@ etag@^1.8.1, etag@~1.8.1:
   resolved "https://registry.yarnpkg.com/etag/-/etag-1.8.1.tgz#41ae2eeb65efa62268aebfea83ac7d79299b0887"
   integrity sha512-aIL5Fx7mawVa300al2BnEE4iNvo1qETxLrPI/o05L7z6go7fCw1J6EQmbK4FmJ2AS7kgVF/KEZWufBfdClMcPg==
 
+etro@^0.12.0:
+  version "0.12.0"
+  resolved "https://registry.yarnpkg.com/etro/-/etro-0.12.0.tgz#b0b0113bcf8ae226a4d20e97435d29dbad85f374"
+  integrity sha512-M6zWfx6Ech9/gwrYK39z6Wt0YqqSfzMHg13ZRzzfrEL4Zl1ZKWmRwRZgJJ7O5n1JqnJ/5+CQeMg3Gl7UXsCcag==
+
 execa@^5.0.0, execa@^5.1.1:
   version "5.1.1"
   resolved "https://registry.yarnpkg.com/execa/-/execa-5.1.1.tgz#f80ad9cbf4298f7bd1d4c9555c21e93741c411dd"

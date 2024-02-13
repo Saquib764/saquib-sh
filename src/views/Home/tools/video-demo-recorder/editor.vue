@@ -4,13 +4,22 @@
     <v-btn
       style="position: fixed; top: 10px; right: 10px;"
       color="black"
+      @click="render_movie()"
+      >Render</v-btn>
+    <!-- <v-btn
+      style="position: fixed; top: 10px; right: 10px;"
+      color="black"
       @click="render()"
-      >Save</v-btn>
+      >Save</v-btn> -->
     <div class="editor-holder">
+      <div class="menu-holder">
+        Menu
+      </div>
       <div>
-        <img :src="BG" />
-        <video :src="currentClip?.camera_video_url" controls></video>
-        <video v-show="currentClip?.screen_video_url" :src="currentClip?.screen_video_url" controls></video>
+        <canvas ref="canvasEl" style="border: 1px solid black; width: 100%;"></canvas>
+        <!-- <img :src="BG" /> -->
+        <!-- <video :src="currentClip?.camera_video_url" controls></video> -->
+        <!-- <video v-show="currentClip?.screen_video_url" :src="currentClip?.screen_video_url" controls></video> -->
       </div>
 
     </div>
@@ -31,11 +40,12 @@
 import { watch, reactive, onMounted, onBeforeUnmount } from 'vue'
 
 import localForage from 'localforage'
-import {createVideoThumbnail} from '@/utils/common'
+import {createVideoThumbnail, getVideoMeta, getImageFromUrl} from '@/utils/common'
 import { Muxer, ArrayBufferTarget } from 'webm-muxer';
 
 
-const BG = 'https://static.vecteezy.com/system/resources/previews/026/307/268/non_2x/cool-plain-blue-abstract-background-hd-wallpaper-design-free-vector.jpg'
+// const BG = 'https://static.vecteezy.com/system/resources/previews/026/307/268/non_2x/cool-plain-blue-abstract-background-hd-wallpaper-design-free-vector.jpg'
+const BG = '/001.png'
 
 
 if(process.client) {
@@ -71,12 +81,155 @@ const states = reactive({
   currentClipIndex: 0
 })
 
+const canvasEl = ref(null)
+
+const nuxt = useNuxtApp()
 const currentClip = computed(()=>{
   return states.recordings[states.currentClipIndex]
 })
 
+async function render_movie() {
+
+  const etro = nuxt.$etro
+
+  let WIDTH = 1920
+  let HEIGHT = 1080
+  canvasEl.value.willReadFrequently = true
+  canvasEl.value.width = WIDTH
+  canvasEl.value.height = HEIGHT
+
+  let scale1 = fitOnCanvas({
+    width: window.innerWidth - 20,  height: window.innerHeight - 20
+  }, {width: WIDTH, height: HEIGHT}, 'contain')
+
+  const movie = new etro.Movie({
+    canvas: canvasEl.value, // HTML canvas element to draw on
+    // actx: new AudioContext(), // Web Audio context to play through (creates a new context with default settings if omitted)
+    background: etro.parseColor('#f0f'), // background color (dynamic, defaults to black)
+    repeat: false // whether to loop forever while playing and streaming (defaults to false)
+  });
+
+  let bg = await getImageFromUrl(BG)
+
+  const layer = new etro.layer.Image({
+    startTime: 0,
+    duration: 5,
+    source: bg.image,
+    sourceX: 0, // default: 0
+    sourceY: 0, // default: 0
+    sourceWidth: WIDTH, // default: null (full width)
+    sourceHeight: HEIGHT, // default: null (full height)
+    x: 0, // default: 0
+    y: 0, // default: 0
+    // destWidth: bg.width,
+    // destHeight: bg.height,
+    // width: 600, // default: null (full width)
+    // height: 400, // default: null (full height)
+    opacity: 1, // default: 1
+  });
+  const scale = fitOnCanvas({width: WIDTH, height: HEIGHT}, bg)
+  const effect = new etro.effect.Transform({
+    matrix: new etro.effect.Transform.Matrix()
+      .scale(scale.scaleX, scale.scaleY),
+  })
+  layer.addEffect(effect)
+  const layer1 = new etro.layer.Text({
+    startTime: 0,
+    duration: 5,
+    text: 'Hello World',
+    x: 0, // default: 0
+    y: 0, // default: 0
+    width: 400, // default: null (full width)
+    height: 400, // default: null (full height)
+    opacity: 1, // default: 1
+    color: etro.parseColor('white'), // default: new etro.Color(0, 0, 0, 1)
+    font: '40px sans-serif', // default: '10px sans-serif'
+    textX: 40, // default: 0
+    textY: 100, // default: 0
+    textAlign: 'left', // default: 'left'
+    textBaseline: 'alphabetic', // default: 'alphabetic'
+    textDirection: 'ltr', // default: 'ltr'
+    textStroke: { // default: null (no stroke)
+      color: etro.parseColor('black'),
+      // position: TextStrokePosition.Outside, // default: TextStrokePosition.Outside
+      thickness: 2, // default: 1
+    },
+  });
+
+  let screen_layer = null
+  if(states.recordings[0].screen) {
+    let dim = await getVideoMeta(states.recordings[0].screen_video_url)
+    console.log(dim)
+    screen_layer = new etro.layer.Video({
+      startTime: 0,
+      duration: 5,
+      source: states.recordings[0].screen_video_url,
+      sourceX: 0,
+      sourceY: 0,
+      sourceWidth: dim.width,
+      sourceHeight: dim.height,
+      x: 100,
+      y: 100
+    })
+    const effect = new etro.effect.Transform({
+      matrix: new etro.effect.Transform.Matrix()
+        .scale(0.5, 0.5),
+    })
+    screen_layer.addEffect(effect)
+  }
+
+  const video_layer = new etro.layer.Video({
+    startTime: 0,
+    duration: 5,
+    source: states.recordings[0].camera_video_url,
+    sourceX: 0, // default: 0
+    sourceY: 0, // default: 0
+    sourceWidth: WIDTH, // default: null (full width)
+    sourceHeight: HEIGHT, // default: null (full height)
+    x: 400, // default: 0
+    y: 200, // default: 0
+    // width: 400, // default: null (full width)
+    // height: 400, // default: null (full height)
+    opacity: 1, // default: 1
+  });
+  const effect1 = new etro.effect.Transform({
+    matrix: new etro.effect.Transform.Matrix()
+      .scale(1.5, 1.5),
+  })
+  video_layer.addEffect(effect1)
+  let r = 300
+  const effect2 = new etro.effect.EllipticalMask({
+    x: 1.5*r, // the x-coordinate of the center of the ellipse
+    y: 1.1*r, // the y-coordinate of the center of the ellipse
+    radiusX: r, // the horizontal radius of the ellipse
+    radiusY: r, // the vertical radius of the ellipse
+    rotation: 0, // rotation angle in radians (default: 0)
+    startAngle: 0, // start angle in radians (default: 0)
+    endAngle: 2 * Math.PI, // end angle in radians (default: 2 * Math.PI)
+    anticlockwise: false, // whether the ellipse is drawn clockwise or anticlockwise (default: false)
+  })
+  video_layer.addEffect(effect2)
+
+  movie.addLayer(layer)
+  movie.addLayer(layer1)
+  if(screen_layer) {
+    movie.addLayer(screen_layer)
+  }
+  movie.addLayer(video_layer)
+
+  console.log(new etro.effect.Visual())
+
+  await movie.play({
+    duration: 3, // how long to play for, in seconds (by default, the movie will play to the end)
+    onStart: () => {
+      console.log('All resources are loaded, and playback has started.');
+    }, // `onStart` is optional
+  });
+  console.log('The movie is done playing');
+}
 
 onMounted(async ()=>{
+  // render_movie()
   let recordings = await db.getItem('recordings') || []
   states.recordings = await Promise.all(recordings.map(async (recording)=>{
     let {camera, screen, ...rest} = recording
@@ -290,15 +443,23 @@ async function render() {
   display: flex;
   height: calc(100vh - 60px);
   padding: 10px;
+  gap: 10px;
 
   &>div {
+    &.menu-holder {
+      width: 200px;
+      background: rgb(207, 225, 185);
+      padding: 10px;
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: pointer;
+    }
     border-radius: 8px;
     width: 100%;
     overflow: hidden;
     cursor: pointer;
     aspect-ratio: 16/9;
     margin: auto;
-    background-color: red;
     position: relative;
 
     img {

@@ -1,13 +1,17 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls'
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 let state = {
   scene: null,
   renderer: null,
   camera: null,
   orbitControl: null,
-  transformControl: null
+  transformControl: null,
+  composer: null
 }
 
 export function useScene() {
@@ -36,6 +40,40 @@ export function useRenderer() {
     state.renderer = renderer
   }
   return state.renderer
+}
+
+export function useComposer() {
+  if(!state.composer) {
+    if(state.renderer && state.scene && state.camera) {
+      state.composer = new EffectComposer(state.renderer)
+      state.composer.addPass(new RenderPass(state.scene, state.camera))
+
+      const outputPass = new OutputPass();
+      state.composer.addPass(outputPass)
+    }
+  }else{
+    let dom = state.renderer.domElement
+    state.composer.setSize(dom.clientWidth, dom.clientHeight)
+  }
+  return state.composer
+}
+
+export function applyRender() {
+  if(state.composer) {
+    state.composer.render()
+    return
+  }
+  if(state.renderer && state.scene && state.camera) {
+    state.renderer.render(state.scene, state.camera)
+  }
+}
+
+export function resizeRenderer(width, height) {
+  if(!state.renderer) return
+  state.renderer.setSize(width, height)
+  if(state.composer) {
+    state.composer.setSize(width, height)
+  }
 }
 
 export function useCamera() {

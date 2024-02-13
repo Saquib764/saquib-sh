@@ -96,7 +96,7 @@
         </v-window-item>
       </v-window>
     </div>
-    <three-js>
+    <three-js style="width: 50vw; height: 50vw; margin-left: 25vw;">
       <div v-for="l, i in states.lights.filter(l=> l.isActive)" :key="l.id">
         <directional-light 
           v-if="l.isDiectional"
@@ -548,7 +548,7 @@ async function set_surface(image, points, mask) {
   sub_mesh.position.z += 0.01
 
 
-  let bg_material = new THREE.MeshStandardMaterial({ map: texture});
+  let bg_material = new THREE.MeshBasicMaterial({ map: texture});
   let bg_mesh = new THREE.Mesh(geometry, bg_material);
   bg_mesh.castShadow = true;
   bg_mesh.receiveShadow = true;

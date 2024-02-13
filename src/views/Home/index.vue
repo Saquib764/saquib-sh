@@ -3,9 +3,9 @@
     <span style="margin-top: 50px; font-size: 90px;">Saquib Alam</span>
     <span>co-founder at <a href="https://photoshift.co">photoshift.co</a></span>
     <p>
-      Hi there, I am a physicist turned software engineer. I am passionate about building products that solve real world problems. I am currently working on zust.ai and photoshift.co, a generative AI platform for product photography.
+      Hi there, I am a robotics engineer with background in <strong>physics</strong> and <strong>autonomous driving</strong>. I am passionate about building products that solve real world problems. I am currently working on <strong>zust.ai and photoshift.co</strong>, a generative AI platform for product photography.
     </p>
-    <p>We are building photoshift.co as a remote first company, while slow traveling around India.</p>
+    <p>Currently I am working from <a href="https://auroville.org/">Auroville</a>, Pondicherry.</p>
     <div class="social">
       <a href="https://twitter.com/saquiboye" target="_blank"><img src="https://img.shields.io/twitter/follow/saquiboye?style=social" /></a>
       <a href="https://instagram.com/saquiboye" target="_blank"><img src="https://img.shields.io/badge/-saquiboye-%23E4405F?style=flat-square&logo=Instagram&logoColor=white" /></a>
@@ -15,7 +15,7 @@
 
     <h1 class="mt-6">Experiments-</h1>
     <span>A list of web-based experiments in the field of computer vision, generative AI, 3D, and robotics. </span>
-    <div style="display: flex; flex-direction: column; gap: 20px;">
+    <div class="project-holder">
       <a href="/tools/ai-blog-writer" target="_blank">Free AI blog writer, step-by-step. write blogs at super speed</a>
       <a href="/tools/image-to-3d" target="_blank">Single image to 3D point cloud</a>
       <a href="/tools/interactive-website-background" target="_blank">Interactive image background for landing pages</a>
@@ -64,6 +64,7 @@ useSeoMeta({
   flex-direction: column;
   gap: 10px;
   margin: auto;
+  min-height: 100vh;
 
   .social {
     display: flex;
@@ -74,6 +75,20 @@ useSeoMeta({
     a {
       border-radius: 3px;
       overflow: hidden;
+    }
+  }
+
+  .project-holder {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    
+    a {
+      background: rgb(207, 225, 185);
+      padding: 10px;
+      border-radius: 8px;
+      // text-decoration: none;
+      color: rgb(40, 40, 40);
     }
   }
 }
