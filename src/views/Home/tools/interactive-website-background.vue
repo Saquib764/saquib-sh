@@ -106,7 +106,7 @@ import {  BASE_API, ENV } from '@/constants';
 import { downloadImage, isMobile, sleep, getImageDimension } from "@/utils/common"
 import Connect from '@/components/Footers/Connect.vue'
 
-function get_embedding_code(image_url, depth_url, scale, sensitivity, render_mode) {
+function get_embedding_code(image_url, depth_url, scale, sensitivity, render_mode, focus, aperture) {
   states.isCopied = false
   let tag = 'sc' + 'ript'
   return `
@@ -120,6 +120,8 @@ function get_embedding_code(image_url, depth_url, scale, sensitivity, render_mod
         const scale = ${scale};
         const sensitivity = ${sensitivity};
         const render_mode = '${render_mode}';
+        const focus = ${focus};
+        const aperture = ${aperture};
 
         const parent = document.createElement('div');
         let style = {
@@ -132,7 +134,7 @@ function get_embedding_code(image_url, depth_url, scale, sensitivity, render_mod
           zIndex: -1,
         };
         Object.assign(parent.style, style);
-        init(parent, image_url, depth_url, scale, sensitivity, render_mode);
+        init(parent, image_url, depth_url, scale, sensitivity, render_mode, focus, aperture);
         document.body.appendChild(parent);
       });
     </${tag}>
