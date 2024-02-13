@@ -77,7 +77,7 @@ onMounted( async() => {
 })
 onBeforeUnmount(()=> {
   dispose()
-  resize.disconnect()
+  resize?.disconnect()
   window.cancelAnimationFrame(loopId)
 })
 function loop() {
