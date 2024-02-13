@@ -17,7 +17,7 @@
     <span>A list of web-based experiments in the field of computer vision, generative AI, 3D, and robotics. </span>
     <div class="project-holder">
       <a href="/tools/ai-blog-writer" target="_blank">Free AI blog writer, step-by-step. write blogs at super speed</a>
-      <a href="/tools/defocus" target="_blank">Change focus point in your image. Blur the irrelivant parts.</a>
+      <a href="/tools/defocus" target="_blank">Change focus point in your image. Blur the irrelevant parts.</a>
       <a href="/tools/image-to-3d" target="_blank">Single image to 3D point cloud</a>
       <a href="/tools/interactive-website-background" target="_blank">Interactive image background for landing pages</a>
       <!-- <a href="/tools/relight" target="_blank">Relight</a> -->
