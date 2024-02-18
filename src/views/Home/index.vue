@@ -21,7 +21,7 @@
       <a href="/tools/image-to-3d" target="_blank">Single image to 3D point cloud</a>
       <a href="/tools/interactive-website-background" target="_blank">Interactive image background for landing pages</a>
       <!-- <a href="/tools/relight" target="_blank">Relight</a> -->
-      <a href="/tools/video-demo-recorder" target="_blank">A free tool to easily record and edit video demo of your product (Building...)</a>
+      <!-- <a href="/tools/video-demo-recorder" target="_blank">A free tool to easily record and edit video demo of your product (Building...)</a> -->
     </div>
   </div>
 </template>
