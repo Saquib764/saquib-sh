@@ -13,6 +13,14 @@
     </div>
     <p>My start-up is in early revenue phase, looking forward to grow quickly. I usually share my start-up journey on Twitter.</p>
 
+    <h1 class="mt-6">3 Product in 12 days challenge-</h1>
+    <span>Build and ship 3 products in 12 days, starting from 18th Feb, 2024</span>
+    <div class="project-holder">
+      <a href="/" target="_blank">Text-2-video - create reels just from text (coming soon).</a>
+      <a href="/" target="_blank">Product demo recorder- create ready to publish saas product demo in your browser (coming soon).</a>
+      <a href="/" target="_blank">Clothes finder AI - platform to find the exact clothes (coming soon).</a>
+    </div>
+
     <h1 class="mt-6">Experiments-</h1>
     <span>A list of web-based experiments in the field of computer vision, generative AI, 3D, and robotics. </span>
     <div class="project-holder">
@@ -83,7 +91,7 @@ useSeoMeta({
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 20px;
-    
+    margin-bottom: 50px;
     a {
       background: rgb(207, 225, 185);
       padding: 10px;
