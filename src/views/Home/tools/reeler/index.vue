@@ -1,13 +1,19 @@
 <template>
   <div class="reeler-page">
     <h2>Reeler</h2>
+    <textarea v-model="states.instruction" placeholder="Script instruction"></textarea>
+    <div style="max-height: 300px; overflow: scroll; white-space: pre-wrap; border: 1px solid black;">{{ states.output }}</div>
     <v-btn
-      style="position: fixed; top: 10px; right: 10px;"
+      color="black"
+      :loading="states.isLoading"
+      @click="get_script()"
+      >Get script</v-btn>
+    <v-btn
       color="black"
       @click="render_movie()"
       >Render</v-btn>
-    <div style="max-height: 90vh; aspect-ratio: 9/16;">
-      <canvas ref="canvasEl" style="border: 1px solid black; height: 100%;"></canvas>
+    <div style="max-height: 40vh; aspect-ratio: 9/16;">
+      <canvas ref="canvasEl" style="border: 1px solid black; height: 100%; max-width: 100%;"></canvas>
     </div>
   </div>
 
@@ -15,46 +21,35 @@
 
 <script setup>
 import { ref, watch, reactive, onMounted, onBeforeUnmount, onBeforeMount } from 'vue'
+import { getAudioMeta } from "@/utils/common";
+const BASE_API = 'https://get-published-nf5wy45qga-uc.a.run.app'
 
+// import localForage from 'localforage'
+
+// if(process.client) {
+//   localForage.setDriver(localForage.INDEXEDDB)
+// }
+
+// const db = localForage.createInstance({
+//   name: 'reeler',
+//   storeName: 'reeler',
+// })
 
 const canvasEl = ref(null)
 const nuxt = useNuxtApp()
 
-const resources = [{
-  type: 'image',
-  image: '/reeler/000.png',
-  startTime: 0,
-  duration: 5,
-}, {
-  type: 'image',
-  image: '/reeler/001.png',
-  startTime: 5,
-  duration: 8,
-}, {
-  type: 'caption',
-  caption: "Ever wondered why millions find peace in Osho's words?",
-  startTime: 0,
-  duration: 5,
-  x: 0.5,
-  y: 0.5,
-}, {
-  type: 'caption',
-  caption: "Osho, a mystic guru, challenged society's norms, advocating for a life of mindfulness, love, and courage.",
-  startTime: 5,
-  duration: 8,
-  x: 0.5,
-  y: 0.5,
-}, {
-  type: 'audio',
-  audio: '/reeler/001.mp3',
-  startTime: 0,
-  duration: 5,
-}, {
-  type: 'audio',
-  audio: '/reeler/002.mp3',
-  startTime: 5,
-  duration: 8,
-}]
+const states = reactive({
+  instruction: `Topic: Rumi poems
+    Instructions: use quotes where ever possible.
+    Number of images: 3 images
+
+    Write a  script for Tiktok video. Break the script into array of segments. Each segment has a voiceover and a prompt for image. Voiceovers must have only 3-6 words. Based on the topic, critically think of the words to highlight in some voiceovers, use * to highlight those words. Always return a valid array. Array contains segment object with following fields - "voiceover", "prompt". Voiceover is the text to be spoken in the video and also shown as subtitle. Prompt is used to generate image to be shown on the screen. Example: [{"voiceover": "Gandhi was a *great* advocate of", "prompt": "An image of gandhi depicting peace"}]
+    `.trim(),
+  script: [],
+  isLoading: false,
+  output: ""
+})
+
 
 function val (element, path, time) { // eslint-disable-line @typescript-eslint/no-explicit-any
   // if (hasCachedValue(element, path)) {
@@ -97,25 +92,73 @@ async function make_audio(etro, layer) {
 }
 
 async function make_caption(etro, layer, dim = {width: 1080, height: 1920}) {
-  const text = new etro.layer.Text({
-    startTime: layer.startTime,
-    duration: layer.duration,
-    text: layer.caption,
-    textX: layer.x * dim.width, // default: 0
-    textY: layer.y * dim.height, // default: 0
-    width: dim.width, // default: null (full width)
-    height: dim.height, // default: null (full height)
-    font: 'bold 48px sans-serif', // default: '16px sans-serif'
-    color: etro.parseColor('black'), // default: black
-    textAlign: 'center', // default: left
-    textBaseline: 'middle', // default: top
-    opacity: 1, // default: 1
-  });
-  return text
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  const fontSize = 48
+  let maxWidth = 0.8
+
+
+  let captions = layer.caption.split(" ")
+  let dx = 0
+  let dy = 0
+  captions = captions.map((word, i, arr) => {
+    const font = `bold ${fontSize}px sans-serif`
+    ctx.font = font
+
+    const isHighlighted = layer.highlights.includes(word)
+
+    let color = isHighlighted ? 'yellow' : 'white'
+    
+    let textWidth = ctx.measureText(word).width
+    if(dx + textWidth > dim.width * maxWidth) {
+      dx = 0
+      dy += fontSize * 1.5
+    }
+    let c =  {
+      word,
+      width: textWidth,
+      startTime: 0,
+      y: dy,
+      x: dx,
+      font,
+      color
+    }
+    dx += c.width + fontSize * 0.6
+    if(dx > dim.width * maxWidth) {
+      dx = 0
+      dy += fontSize * 1.5
+    }
+    return c
+  })
+  let totalWidth = 0
+  for(let i=0; i<captions.length; i++) {
+    totalWidth += captions[i].width
+  }
+  let texts = []
+  let dt = 0
+  for(let i=0; i<captions.length; i++) {
+    let caption = captions[i]
+    const text = new etro.layer.Text({
+      startTime: layer.startTime + dt,
+      duration: layer.duration - dt,
+      text: caption.word,
+      textX: 0.1 * dim.width + caption.x, // default: 0
+      textY: layer.y * dim.height + caption.y, // default: 0
+      width: dim.width, // default: null (full width)
+      height: dim.height, // default: null (full height)
+      font: caption.font, // default: '16px sans-serif'
+      color: etro.parseColor(caption.color || 'white'), // default: black
+      textAlign: 'left', // default: left
+      textBaseline: 'middle', // default: top
+      opacity: 1, // default: 1
+    });
+    texts.push(text)
+    dt += caption.width * layer.duration / totalWidth
+  }
+  return texts
 }
 
 async function make_layer(etro, layer, dim = {width: 1080, height: 1920}) {
-
   let img = await getImageFromUrl(layer.image)
 
   const l = new etro.layer.Image({
@@ -135,9 +178,12 @@ async function make_layer(etro, layer, dim = {width: 1080, height: 1920}) {
     opacity: 1, // default: 1
   });
   const scale = fitOnCanvas({width: dim.width, height: dim.height}, img)
+
+  const f = 1 + 0.1 * layer.duration
   
   const baseScale = new etro.effect.Transform.Matrix().scale(scale.scaleX, scale.scaleY)
-  const baseScale2 = new etro.effect.Transform.Matrix().scale(scale.scaleX*1.5, scale.scaleY*1.5)
+  const baseScale2 = new etro.effect.Transform.Matrix().scale(scale.scaleX*f, scale.scaleY*f)
+  baseScale2.translate(-dim.width * 0.5 * (f-1), -dim.height * 0.5 * (f-1))
 
   const keyframe = new etro.KeyFrame(
     [0, baseScale],
@@ -168,7 +214,7 @@ async function make_layer(etro, layer, dim = {width: 1080, height: 1920}) {
   return l
 }
 
-async function render_movie() {
+async function render_movie(download = true) {
   const etro = nuxt.$etro
 
   let WIDTH = 1080
@@ -184,37 +230,201 @@ async function render_movie() {
   const movie = new etro.Movie({
     canvas: canvasEl.value, // HTML canvas element to draw on
     // actx: new AudioContext(), // Web Audio context to play through (creates a new context with default settings if omitted)
-    background: etro.parseColor('#f0f'), // background color (dynamic, defaults to black)
+    background: etro.parseColor('#000'), // background color (dynamic, defaults to black)
     repeat: false // whether to loop forever while playing and streaming (defaults to false)
   });
 
-  for(let i =0; i< resources.length; i++) {
-    if(resources[i].type === 'audio') {
-      const audio = await make_audio(etro, resources[i])
+  const timeline = []
+  let currentStartTime = 0
+  for(let i=0; i < states.script.length; i++) {
+    const segment = states.script[i]
+    
+    let t = segment.duration
+    let voiceover = segment.voiceover.split("*")
+    let highlights = voiceover.filter((v, i) => i % 2 === 1)
+    voiceover = voiceover.join("")
+
+    timeline.push({
+      type: 'audio',
+      audio: segment.audio,
+      startTime: currentStartTime,
+      duration: t,
+    })
+
+    timeline.push({
+      type: 'image',
+      image: segment.image,
+      startTime: currentStartTime,
+      duration: t,
+    })
+    timeline.push({
+      type: 'caption',
+      caption: voiceover,
+      highlights,
+      startTime: currentStartTime,
+      duration: t,
+      y: 0.7,
+    })
+    currentStartTime += t
+  }
+
+  for(let i =0; i< timeline.length; i++) {
+    if(timeline[i].type === 'audio') {
+      const audio = await make_audio(etro, timeline[i])
       movie.addLayer(audio)
       continue
     }
-    if(resources[i].type === 'image') {
-      const layer = await make_layer(etro, resources[i], {width: WIDTH, height: HEIGHT})
+    if(timeline[i].type === 'image') {
+      const layer = await make_layer(etro, timeline[i], {width: WIDTH, height: HEIGHT})
       movie.addLayer(layer)
       continue
     }
-    if(resources[i].type === 'caption') {
-      const caption = await make_caption(etro, resources[i])
-      movie.addLayer(caption)
+    if(timeline[i].type === 'caption') {
+      const captions = await make_caption(etro, timeline[i])
+
+      captions.map(caption => {
+        movie.addLayer(caption)
+      })
       continue
     }
   }
 
+  if(!download) {
+    await movie.play({
+      duration: 3, // how long to play for, in seconds (by default, the movie will play to the end)
+      onStart: () => {
+        console.log('All resources are loaded, and playback has started.');
+      }, // `onStart` is optional
+    });
+  }else {
+    let mediaRecorder;
+    let chunks = [];
+    let stream = await movie.stream({
+      frameRate: 60, // fps for the stream's video tracks
+      duration: 5, // how long to stream, in seconds (by default, the movie will stream to the end)
+      video: true, // whether to render visual layers (defaults to true)
+      audio: true, // whether to render layers with audio (defaults to true)
+      onStart: (stream) => {
+        console.log('All resources are loaded, and streaming has begun.');
+        // Process stream
+        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.start();
 
-  await movie.play({
-    duration: 3, // how long to play for, in seconds (by default, the movie will play to the end)
-    onStart: () => {
-      console.log('All resources are loaded, and playback has started.');
-    }, // `onStart` is optional
-  });
+        mediaRecorder.ondataavailable = (e) => {
+          console.log('data available')
+          chunks.push(e.data);
+        };
+      },
+    });
+    console.log(stream)
+
+    console.log('The movie is done playing all');
+    mediaRecorder.onstop = () => {
+      console.log('recording stoped')
+      let blob = new Blob(chunks, { type: 'video/webm' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'movie.webm';
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+    mediaRecorder.stop();
+    // const url = URL.createObjectURL(blob);
+    // const a = document.createElement('a');
+    // a.href = url;
+    // a.download = 'movie.webm';
+    // a.click();
+    // URL.revokeObjectURL(url);
+  }
   console.log('The movie is done playing');
 }
 
+async function get_script() {
+  states.isLoading = true
+  let res = await fetch(`${BASE_API}/openai/generic`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      system: states.instruction,
+      instruction: ""
+    })
+  })
+  let data = await res.json()
+  let json = data.result
+  console.log(json)
+  if(json.indexOf('```json') > -1) {
+    json = json.substring(7, json.length-3)
+  }
+  if(json.indexOf('```javascript') > -1) {
+    json = json.substring(13, json.length-3)
+  }
+  if(json.indexOf('```js') > -1) {
+    json = json.substring(5, json.length-3)
+  }
+  console.log(json)
+  let script = JSON.parse(json)
+  script = script.segments || script
+
+  for(let i=0; i <script.length; i++) {
+    // Get audio
+    let res = await fetch(`${BASE_API}/speech`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        voice: "alloy",
+        text: script[i].voiceover
+      })
+    })
+    // reach buffer as mp3 blob
+    let blob = await res.blob()
+    let audioUrl = URL.createObjectURL(blob)
+    script[i].audio = audioUrl
+    let audioMeta = await getAudioMeta(audioUrl)
+    script[i].duration = audioMeta.duration
+
+    let res1 = await fetch(`https://stage-zust-ai-be-5ipjkdoeba-uc.a.run.app/image/text`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        prompt: script[i].prompt,
+        width: 768,
+        height: 1024
+      })
+    })
+    res1 = await res1.json()
+    script[i].image = res1.result[0]
+  }
+  states.script = script
+  console.log(script)
+  states.output = states.script.map(s=> `${s.voiceover}\n${s.prompt}`).join("\n\n")
+  states.isLoading = false
+}
+
+onMounted(async ()=>{
+  states.output = states.script.map(s=> `${s.voiceover}\n${s.prompt}`).join("\n\n")
+})
 
 </script>
+
+<style scoped lang="scss">
+.reeler-page {
+  display: flex;
+  flex-direction: column;
+  align-items: left;
+  gap: 1em;
+  padding: 1em;
+  max-width: 100vw;
+  textarea {
+    width: 100%;
+    height: 10em;
+  }
+}
+</style>
+

@@ -308,7 +308,25 @@ export async function createVideoThumbnail(video_url) {
   const thumbnail = canvas.toDataURL("image/png");
   document.body.removeChild(video)
   return thumbnail
-} 
+}
+
+export function getAudioMeta(audio_url) {
+  const audio = document.createElement('audio');
+  audio.src = audio_url;
+  audio.crossOrigin = "anonymous";
+  audio.muted = true
+  audio.autoplay = false
+  audio.loop = false
+  document.body.appendChild(audio)
+  return new Promise((resolve, reject)=>{
+    audio.onloadedmetadata = (e) => {
+      resolve({
+        duration: audio.duration
+      })
+    }
+    audio.play()
+  }
+)}
 
 export function getVideoMeta(video_url) {
   const video = document.createElement('video');
