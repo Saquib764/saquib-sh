@@ -407,6 +407,7 @@ async function render_movie(download = false) {
 }
 
 async function get_script() {
+  states.currentStep = 0
   states.isLoading = true
   let res = await fetch(`${BASE_API}/openai/generic`, {
     method: 'POST',
@@ -459,6 +460,7 @@ async function get_script() {
 }
 
 async function generate_assets() {
+  states.currentStep = 1
   states.isLoading = true
   for(let i=0; i <states.script.length; i++) {
     // Get audio
