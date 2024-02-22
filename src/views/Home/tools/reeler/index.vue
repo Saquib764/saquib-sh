@@ -357,7 +357,6 @@ async function render_movie(download = false) {
 
   if(!download) {
     await movie.play({
-      duration: 3, // how long to play for, in seconds (by default, the movie will play to the end)
       onStart: () => {
         console.log('All resources are loaded, and playback has started.');
       }, // `onStart` is optional
@@ -367,7 +366,6 @@ async function render_movie(download = false) {
     let chunks = [];
     let stream = await movie.stream({
       frameRate: 60, // fps for the stream's video tracks
-      duration: 5, // how long to stream, in seconds (by default, the movie will stream to the end)
       video: true, // whether to render visual layers (defaults to true)
       audio: true, // whether to render layers with audio (defaults to true)
       onStart: (stream) => {
