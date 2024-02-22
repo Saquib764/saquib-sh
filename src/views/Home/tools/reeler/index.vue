@@ -1,19 +1,81 @@
 <template>
   <div class="reeler-page">
     <h2>Reeler</h2>
-    <textarea v-model="states.instruction" placeholder="Script instruction"></textarea>
-    <div style="max-height: 300px; overflow: scroll; white-space: pre-wrap; border: 1px solid black;">{{ states.output }}</div>
-    <v-btn
-      color="black"
-      :loading="states.isLoading"
-      @click="get_script()"
-      >Get script</v-btn>
-    <v-btn
-      color="black"
-      @click="render_movie()"
-      >Render</v-btn>
-    <div style="max-height: 40vh; aspect-ratio: 9/16;">
-      <canvas ref="canvasEl" style="border: 1px solid black; height: 100%; max-width: 100%;"></canvas>
+    <div style="display: grid; gap: 10px; grid-template-columns: 2fr 1fr;">
+      <div style="display: block;">
+        <v-textarea v-model="states.instruction" :placeholder="states.instructionGuide" outlined></v-textarea>
+        <div>
+          <h3>Script</h3>
+
+          <v-list style="gap: 20px; max-height: 50vh; overflow: scroll;" variant="outlined">
+            <v-list-item v-for="(item, index) in states.script" :key="index" style="margin-bottom: 5px; border-radius: 8px;">
+                <tagsarea class="tagsarea mb-1" v-model="item.voiceover" placeholder="Voiceover" />
+                <tagsarea class="tagsarea mb-1" v-model="item.prompt" placeholder="Prompt for image" />
+                <div style="display: flex; flex-direction: row;">
+                  <audio v-show="item.audio" :src="item.audio" controls></audio>
+                  <v-img v-show="item.image" :src="item.image" style="height: 50px"></v-img>
+                </div>
+                <template v-slot:append>
+                  <v-btn
+                    icon="mdi-creation"
+                    variant="text"
+                    :loading="item.isGenerating"
+                  ></v-btn>
+                  <v-btn
+                    icon="mdi-delete"
+                    variant="text"
+                    @click="states.script.splice(index, 1)"
+                  ></v-btn>
+                  <v-btn
+                    icon="mdi-plus"
+                    variant="text"
+                    @click="states.script.splice(index+1, 0, {voiceover: '', prompt: ''})"
+                  ></v-btn>
+                </template>
+            </v-list-item>
+          </v-list>
+        </div>
+        <div style="display: flex; flex-direction: row; gap: 10px">
+          <v-btn
+            color="black"
+            icon="mdi-plus"
+            size="small"
+            @click="states.script.splice(index+1, 0, {voiceover: '', prompt: ''})"/>
+          <v-btn
+            :color="states.currentStep > 0?'success':'black'"
+            :prepend-icon="states.currentStep > 0?'mdi-check':null"
+            :loading="states.isLoading && states.currentStep === 0"
+            @click="get_script()"
+            :disabled="states.isLoading || states.currentStep < 0"
+            >Get script</v-btn>
+          <v-btn
+            :color="states.currentStep > 1?'success':'black'"
+            :prepend-icon="states.currentStep > 1?'mdi-check':null"
+            :loading="states.isLoading && states.currentStep === 1"
+            append-icon="mdi-creation"
+            @click="generate_assets()"
+            :disabled="states.isLoading || states.currentStep < 1"
+            >Generate assets</v-btn>
+          <v-btn
+            color="black"
+            :color="states.currentStep > 2?'success':'black'"
+            :prepend-icon="states.currentStep > 2?'mdi-check':null"
+            :loading="states.isLoading && states.currentStep === 2"
+            @click="render_movie()"
+            :disabled="states.isLoading || states.currentStep < 2"
+            >Preview</v-btn>
+        </div>
+      </div>
+      <div style="max-height: 70vh; aspect-ratio: 9/16;">
+        <canvas ref="canvasEl" style="border: 1px solid black; height: 100%; max-width: 100%;"></canvas>
+
+        <v-btn
+          color="black"
+          :loading="states.isLoading && states.currentStep === 3"
+          @click="render_movie(true)"
+          :disabled="states.isLoading || states.currentStep < 3"
+          >Download</v-btn>
+      </div>
     </div>
   </div>
 
@@ -22,6 +84,7 @@
 <script setup>
 import { ref, watch, reactive, onMounted, onBeforeUnmount, onBeforeMount } from 'vue'
 import { getAudioMeta } from "@/utils/common";
+import {useStore} from 'vuex'
 const BASE_API = 'https://get-published-nf5wy45qga-uc.a.run.app'
 
 // import localForage from 'localforage'
@@ -35,19 +98,21 @@ const BASE_API = 'https://get-published-nf5wy45qga-uc.a.run.app'
 //   storeName: 'reeler',
 // })
 
+definePageMeta({
+  layout: "default-layout",
+});
+
 const canvasEl = ref(null)
 const nuxt = useNuxtApp()
+const store = useStore()
 
 const states = reactive({
-  instruction: `Topic: Rumi poems
-    Instructions: use quotes where ever possible.
-    Number of images: 3 images
-
-    Write a  script for Tiktok video. Break the script into array of segments. Each segment has a voiceover and a prompt for image. Voiceovers must have only 3-6 words. Based on the topic, critically think of the words to highlight in some voiceovers, use * to highlight those words. Always return a valid array. Array contains segment object with following fields - "voiceover", "prompt". Voiceover is the text to be spoken in the video and also shown as subtitle. Prompt is used to generate image to be shown on the screen. Example: [{"voiceover": "Gandhi was a *great* advocate of", "prompt": "An image of gandhi depicting peace"}]
-    `.trim(),
+  instruction: ``.trim(),
+  instructionGuide: `write the topic and instructions for the script. \nExample: \nRumi poems \nuse quotes where ever possible. Create 3 slides`,
   script: [],
   isLoading: false,
-  output: ""
+  output: "",
+  currentStep: 0
 })
 
 
@@ -94,7 +159,7 @@ async function make_audio(etro, layer) {
 async function make_caption(etro, layer, dim = {width: 1080, height: 1920}) {
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
-  const fontSize = 48
+  const fontSize = 64
   let maxWidth = 0.8
 
 
@@ -214,7 +279,8 @@ async function make_layer(etro, layer, dim = {width: 1080, height: 1920}) {
   return l
 }
 
-async function render_movie(download = true) {
+async function render_movie(download = false) {
+  states.isLoading = true
   const etro = nuxt.$etro
 
   let WIDTH = 1080
@@ -338,6 +404,8 @@ async function render_movie(download = true) {
     // URL.revokeObjectURL(url);
   }
   console.log('The movie is done playing');
+  states.isLoading = false
+  states.currentStep = 3
 }
 
 async function get_script() {
@@ -348,27 +416,53 @@ async function get_script() {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      system: states.instruction,
+      system: `Topic: ${states.instruction}
+      
+
+        Write a  paragraph for Tiktok video. Break the paragraph into smaller sections/slides/segments/parts. Each section has a voiceover and a prompt for image. Voiceovers must have only 3-6 words. Based on the topic, critically think of the words to highlight in some voiceovers, use * to highlight those words. Always return a valid JSON array of sections. Array contains section object with following fields - "voiceover", "prompt". Voiceover is the text to be spoken in the video and also shown as subtitle. Prompt is used to generate image to be shown on the screen. Example: [{"voiceover": "Gandhi was a *great* advocate of", "prompt": "An image of gandhi depicting peace"}]. Return only a valid JSON
+        `.trim(),
       instruction: ""
     })
   })
-  let data = await res.json()
-  let json = data.result
-  console.log(json)
-  if(json.indexOf('```json') > -1) {
-    json = json.substring(7, json.length-3)
-  }
-  if(json.indexOf('```javascript') > -1) {
-    json = json.substring(13, json.length-3)
-  }
-  if(json.indexOf('```js') > -1) {
-    json = json.substring(5, json.length-3)
-  }
-  console.log(json)
-  let script = JSON.parse(json)
-  script = script.segments || script
+  try{
+    let data = await res.json()
+    let json = data.result
+    console.log(json)
+    if(json.indexOf('```json') > -1) {
+      json = json.substring(7, json.length-3)
+    }
+    if(json.indexOf('```javascript') > -1) {
+      json = json.substring(13, json.length-3)
+    }
+    if(json.indexOf('```js') > -1) {
+      json = json.substring(5, json.length-3)
+    }
+    console.log(json)
+    let script = JSON.parse(json)
+    script = script.segments || script
 
-  for(let i=0; i <script.length; i++) {
+    states.script = script
+    store.dispatch('houseKeeping/showSnackbar', {
+      message: 'Script generated successfully. Now generate assets',
+      color: 'success',
+      timeout: 4000
+    })
+  }catch(e) {
+    console.log(e)
+    
+    store.dispatch('houseKeeping/showSnackbar', {
+      message: 'Something went wrong. Please try again later',
+      color: 'error',
+      timeout: 4000
+    })
+  }
+  states.isLoading = false
+  states.currentStep = 1
+}
+
+async function generate_assets() {
+  states.isLoading = true
+  for(let i=0; i <states.script.length; i++) {
     // Get audio
     let res = await fetch(`${BASE_API}/speech`, {
       method: 'POST',
@@ -377,15 +471,15 @@ async function get_script() {
       },
       body: JSON.stringify({
         voice: "alloy",
-        text: script[i].voiceover
+        text: states.script[i].voiceover
       })
     })
     // reach buffer as mp3 blob
     let blob = await res.blob()
     let audioUrl = URL.createObjectURL(blob)
-    script[i].audio = audioUrl
+    states.script[i].audio = audioUrl
     let audioMeta = await getAudioMeta(audioUrl)
-    script[i].duration = audioMeta.duration
+    states.script[i].duration = audioMeta.duration
 
     let res1 = await fetch(`https://stage-zust-ai-be-5ipjkdoeba-uc.a.run.app/image/text`, {
       method: 'POST',
@@ -393,18 +487,16 @@ async function get_script() {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        prompt: script[i].prompt,
+        prompt: states.script[i].prompt,
         width: 768,
         height: 1024
       })
     })
     res1 = await res1.json()
-    script[i].image = res1.result[0]
+    states.script[i].image = res1.result[0]
   }
-  states.script = script
-  console.log(script)
-  states.output = states.script.map(s=> `${s.voiceover}\n${s.prompt}`).join("\n\n")
   states.isLoading = false
+  states.currentStep = 2
 }
 
 onMounted(async ()=>{
