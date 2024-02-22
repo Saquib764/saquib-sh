@@ -439,7 +439,7 @@ async function get_script() {
     }
     console.log(json)
     let script = JSON.parse(json)
-    script = script.segments || script
+    script = script.segments || script.sections || script.slides || script.parts || script
 
     states.script = script
     store.dispatch('houseKeeping/showSnackbar', {
