@@ -7,7 +7,7 @@
       <button @click="reset">Reset</button>
     </div>
     
-    <video ref="video" width="640" height="480" autoplay muted style="transform: scaleX(-100%); display: none;"></video>
+    <video ref="video" width="640" height="480" autoplay muted style="transform: scaleX(-100%); height: 50px;"></video>
     <canvas ref="canvas" width="640" height="480"></canvas>
   </div>
 </template>
