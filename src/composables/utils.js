@@ -23,7 +23,6 @@ export function fitOnCanvas(canvas, object, mode='cover') {
   const {width, height} = canvas
   const {width: w, height: h} = object
   const scale = mode == 'cover' ? Math.max(width/w, height/h) : Math.min(width/w, height/h)
-  console.log('scale', scale, canvas, object)
   return {
     scaleX: scale,
     scaleY: scale,

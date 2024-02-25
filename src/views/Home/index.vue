@@ -17,7 +17,7 @@
     <span>Build and ship 3 products in 12 days, starting from 18th Feb, 2024</span>
     <div class="project-holder">
       <a href="/tools/reeler" target="_blank">Text-2-video - create reels just from text.</a>
-      <a href="/" target="_blank">Product demo recorder- create ready to publish saas product demo in your browser (coming soon).</a>
+      <a href="/tools/video-demo-recorder" target="_blank">Product demo recorder- create ready to publish saas product demo in your browser.</a>
       <a href="/" target="_blank">Clothes finder AI - platform to find the exact clothes (coming soon).</a>
     </div>
 

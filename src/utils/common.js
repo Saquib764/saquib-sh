@@ -323,6 +323,7 @@ export function getAudioMeta(audio_url) {
       resolve({
         duration: audio.duration
       })
+      document.body.removeChild(audio)
     }
     audio.play()
   }
@@ -330,7 +331,7 @@ export function getAudioMeta(audio_url) {
 
 export function getVideoMeta(video_url) {
   const video = document.createElement('video');
-  video.src = video_url;
+  // video.src = video_url;
   video.crossOrigin = "anonymous";
   video.muted = true
   video.autoplay = false
@@ -348,14 +349,37 @@ export function getVideoMeta(video_url) {
   video.style.pointerEvents = 'none'
   video.style.visibility = 'hidden'
   video.style.display = 'none'
+
+  let source = document.createElement('source')
+  source.src = video_url
+  source.type = 'video/mp4'
+  video.appendChild(source)
+
   document.body.appendChild(video)
   return new Promise((resolve, reject)=>{
-    video.onloadedmetadata = (e) => {
-      resolve({
-        width: video.videoWidth,
-        height: video.videoHeight,
-        duration: video.duration
-      })
+    video.onloadedmetadata = async (e) => {
+      // let m = await getAudioMeta(video_url)
+      // console.log(m)
+      if(video.duration === Infinity) {
+        video.currentTime = Number.MAX_SAFE_INTEGER
+        video.ontimeupdate = () => {
+          video.ontimeupdate = null
+          resolve({
+            width: video.videoWidth,
+            height: video.videoHeight,
+            duration: video.duration
+          })
+        }
+      }
+      // Normal behavior
+      else{
+        resolve({
+          width: video.videoWidth,
+          height: video.videoHeight,
+          duration: video.duration
+        })
+        document.body.removeChild(video)
+      }
     }
     video.play()
   })

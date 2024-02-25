@@ -4,7 +4,7 @@
     <v-btn
       style="position: fixed; top: 10px; right: 10px;"
       color="black"
-      @click="render_movie()"
+      @click="render_movie(states.resources)"
       >Render</v-btn>
     <!-- <v-btn
       style="position: fixed; top: 10px; right: 10px;"
@@ -78,8 +78,12 @@ useSeoMeta({
 
 const states = reactive({
   recordings: [],
-  currentClipIndex: 0
+  currentClipIndex: 0,
+  resources: []
 })
+
+let WIDTH = 1920
+let HEIGHT = 1080
 
 const canvasEl = ref(null)
 
@@ -88,12 +92,11 @@ const currentClip = computed(()=>{
   return states.recordings[states.currentClipIndex]
 })
 
-async function render_movie() {
-
+async function render_movie(layers, download = false) {
+  states.isLoading = true
+  await load_data()
   const etro = nuxt.$etro
 
-  let WIDTH = 1920
-  let HEIGHT = 1080
   canvasEl.value.willReadFrequently = true
   canvasEl.value.width = WIDTH
   canvasEl.value.height = HEIGHT
@@ -105,147 +108,152 @@ async function render_movie() {
   const movie = new etro.Movie({
     canvas: canvasEl.value, // HTML canvas element to draw on
     // actx: new AudioContext(), // Web Audio context to play through (creates a new context with default settings if omitted)
-    background: etro.parseColor('#f0f'), // background color (dynamic, defaults to black)
+    background: etro.parseColor('#000'), // background color (dynamic, defaults to black)
     repeat: false // whether to loop forever while playing and streaming (defaults to false)
   });
 
-  let bg = await getImageFromUrl(BG)
+  for(let i =0; i< layers.length; i++) {
+    if(layers[i].type === 'audio') {
+      const audio = await make_audio(etro, layers[i])
+      movie.addLayer(audio)
+      continue
+    }
+    if(layers[i].type === 'image') {
+      const layer = await make_image(etro, layers[i], {width: WIDTH, height: HEIGHT})
+      movie.addLayer(layer)
+      continue
+    }
+    if(layers[i].type === 'video') {
+      const layer = await make_video(etro, layers[i], {width: WIDTH, height: HEIGHT})
+      movie.addLayer(layer)
+      continue
+    }
+    if(layers[i].type === 'caption') {
+      const captions = await make_caption(etro, layers[i])
 
-  const layer = new etro.layer.Image({
-    startTime: 0,
-    duration: 5,
-    source: bg.image,
-    sourceX: 0, // default: 0
-    sourceY: 0, // default: 0
-    sourceWidth: WIDTH, // default: null (full width)
-    sourceHeight: HEIGHT, // default: null (full height)
-    x: 0, // default: 0
-    y: 0, // default: 0
-    // destWidth: bg.width,
-    // destHeight: bg.height,
-    // width: 600, // default: null (full width)
-    // height: 400, // default: null (full height)
-    opacity: 1, // default: 1
-  });
-  const scale = fitOnCanvas({width: WIDTH, height: HEIGHT}, bg)
-  const effect = new etro.effect.Transform({
-    matrix: new etro.effect.Transform.Matrix()
-      .scale(scale.scaleX, scale.scaleY),
-  })
-  layer.addEffect(effect)
-  const layer1 = new etro.layer.Text({
-    startTime: 0,
-    duration: 5,
-    text: 'Hello World',
-    x: 0, // default: 0
-    y: 0, // default: 0
-    width: 400, // default: null (full width)
-    height: 400, // default: null (full height)
-    opacity: 1, // default: 1
-    color: etro.parseColor('white'), // default: new etro.Color(0, 0, 0, 1)
-    font: '40px sans-serif', // default: '10px sans-serif'
-    textX: 40, // default: 0
-    textY: 100, // default: 0
-    textAlign: 'left', // default: 'left'
-    textBaseline: 'alphabetic', // default: 'alphabetic'
-    textDirection: 'ltr', // default: 'ltr'
-    textStroke: { // default: null (no stroke)
-      color: etro.parseColor('black'),
-      // position: TextStrokePosition.Outside, // default: TextStrokePosition.Outside
-      thickness: 2, // default: 1
-    },
-  });
-
-  let screen_layer = null
-  if(states.recordings[0].screen) {
-    let dim = await getVideoMeta(states.recordings[0].screen_video_url)
-    console.log(dim)
-    screen_layer = new etro.layer.Video({
-      startTime: 0,
-      duration: 5,
-      source: states.recordings[0].screen_video_url,
-      sourceX: 0,
-      sourceY: 0,
-      sourceWidth: dim.width,
-      sourceHeight: dim.height,
-      x: 100,
-      y: 100
-    })
-    const effect = new etro.effect.Transform({
-      matrix: new etro.effect.Transform.Matrix()
-        .scale(0.5, 0.5),
-    })
-    screen_layer.addEffect(effect)
+      captions.map(caption => {
+        movie.addLayer(caption)
+      })
+      continue
+    }
   }
 
-  const video_layer = new etro.layer.Video({
-    startTime: 0,
-    duration: 5,
-    source: states.recordings[0].camera_video_url,
-    sourceX: 0, // default: 0
-    sourceY: 0, // default: 0
-    sourceWidth: WIDTH, // default: null (full width)
-    sourceHeight: HEIGHT, // default: null (full height)
-    x: 400, // default: 0
-    y: 200, // default: 0
-    // width: 400, // default: null (full width)
-    // height: 400, // default: null (full height)
-    opacity: 1, // default: 1
-  });
-  const effect1 = new etro.effect.Transform({
-    matrix: new etro.effect.Transform.Matrix()
-      .scale(1.5, 1.5),
-  })
-  video_layer.addEffect(effect1)
-  let r = 300
-  const effect2 = new etro.effect.EllipticalMask({
-    x: 1.5*r, // the x-coordinate of the center of the ellipse
-    y: 1.1*r, // the y-coordinate of the center of the ellipse
-    radiusX: r, // the horizontal radius of the ellipse
-    radiusY: r, // the vertical radius of the ellipse
-    rotation: 0, // rotation angle in radians (default: 0)
-    startAngle: 0, // start angle in radians (default: 0)
-    endAngle: 2 * Math.PI, // end angle in radians (default: 2 * Math.PI)
-    anticlockwise: false, // whether the ellipse is drawn clockwise or anticlockwise (default: false)
-  })
-  video_layer.addEffect(effect2)
+  if(!download) {
+    await movie.play({
+      onStart: () => {
+        console.log('All resources are loaded, and playback has started.');
+      }, // `onStart` is optional
+    });
+  }else {
+    let mediaRecorder;
+    let chunks = [];
+    let stream = await movie.stream({
+      frameRate: 60, // fps for the stream's video tracks
+      video: true, // whether to render visual layers (defaults to true)
+      audio: true, // whether to render layers with audio (defaults to true)
+      onStart: (stream) => {
+        console.log('All resources are loaded, and streaming has begun.');
+        // Process stream
+        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.start();
 
-  movie.addLayer(layer)
-  movie.addLayer(layer1)
-  if(screen_layer) {
-    movie.addLayer(screen_layer)
+        mediaRecorder.ondataavailable = (e) => {
+          console.log('data available')
+          chunks.push(e.data);
+        };
+      },
+    });
+    console.log(stream)
+
+    console.log('The movie is done playing all');
+    mediaRecorder.onstop = () => {
+      console.log('recording stoped')
+      let blob = new Blob(chunks, { type: 'video/webm' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'movie.webm';
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+    mediaRecorder.stop();
+    // const url = URL.createObjectURL(blob);
+    // const a = document.createElement('a');
+    // a.href = url;
+    // a.download = 'movie.webm';
+    // a.click();
+    // URL.revokeObjectURL(url);
   }
-  movie.addLayer(video_layer)
-
-  console.log(new etro.effect.Visual())
-
-  await movie.play({
-    duration: 3, // how long to play for, in seconds (by default, the movie will play to the end)
-    onStart: () => {
-      console.log('All resources are loaded, and playback has started.');
-    }, // `onStart` is optional
-  });
   console.log('The movie is done playing');
+  states.isLoading = false
+  states.currentStep = 3
 }
-
-onMounted(async ()=>{
-  // render_movie()
+async function load_data() {
   let recordings = await db.getItem('recordings') || []
-  states.recordings = await Promise.all(recordings.map(async (recording)=>{
+  let t = 0
+  for(let i=0; i<recordings.length; i++) {
+    let recording = recordings[i]
+    let duration = recording.duration
     let {camera, screen, ...rest} = recording
     if(camera) {
       rest.camera = camera
       rest.camera_thumbnail = await createVideoThumbnail(URL.createObjectURL(camera))
       rest.camera_video_url = URL.createObjectURL(camera)
+
+      let meta = await getVideoMeta(rest.camera_video_url)
+      duration = meta.duration
+      
+      states.resources.push({
+        type: 'video',
+        index: 100,
+        src: rest.camera_video_url,
+        duration: meta.duration,
+        startTime: t,
+        originalWidth: meta.width,
+        originalHeight: meta.height,
+        scale: 0.18,
+        x: WIDTH * 0.9,
+        y: HEIGHT * 0.85,
+        effects: [{type: 'round'}]
+      })
     }
+
     if(screen) {
       rest.screen = screen
       rest.screen_thumbnail = await createVideoThumbnail(URL.createObjectURL(screen))
       rest.screen_video_url = URL.createObjectURL(screen)
+      let meta = await getVideoMeta(rest.screen_video_url)
+      console.log(meta)
+
+      duration = meta.duration
+      
+      states.resources.push({
+        type: 'video',
+        index: 50,
+        src: rest.screen_video_url,
+        duration: meta.duration,
+        startTime: t,
+        originalWidth: meta.width,
+        originalHeight: meta.height,
+        scale: 0.75
+      })
     }
-    return rest
-  }))
+    t += duration
+    states.recordings.push(rest)
+  }
+  console.log(t)
+  states.resources.push({
+    type: 'image',
+    image: BG,
+    index: 0,
+    duration: t,
+    startTime: 0,
+  })
   console.log(states.recordings)
+  states.resources.sort((a, b)=> a.index - b.index)
+}
+onMounted(async ()=>{
+  // render_movie()
 })
 
 const _chunks = []
