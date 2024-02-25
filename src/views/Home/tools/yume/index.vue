@@ -27,17 +27,19 @@ const states = reactive({
 })
 
 onMounted(() => {
-  navigator.mediaDevices.getUserMedia({ video: true })
-    .then(stream => {
-      video.value.srcObject = stream
+  const constraints = { video: { facingMode: 'environment' } };
+  navigator.mediaDevices.getUserMedia(constraints)
+    .then((stream) => {
+      video.value.srcObject = stream;
       video.value.onloadedmetadata = () => {
-        video.value.play()
-        trackBall()
-      }
+        video.value.play();
+        trackBall();
+      };
     })
-    .catch(error => {
-      console.error('Error accessing webcam:', error)
-    })
+    .catch((error) => {
+      console.error('Error accessing webcam:', error);
+    });
+  
 })
 
 function reset() {
