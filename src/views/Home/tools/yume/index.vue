@@ -8,7 +8,7 @@
     </div>
     
     <video ref="video" width="640" height="480" autoplay muted style="transform: scaleX(-100%); height: 50px;"></video>
-    <canvas ref="canvas" width="640" height="480"></canvas>
+    <canvas ref="canvas" width="640" height="480" style="transform: scaleX(-100%);"></canvas>
   </div>
 </template>
 
@@ -21,9 +21,9 @@ const canvas = ref(null)
 let context = null
 
 const states = reactive({
-  r:200,
-  g:200,
-  b:200,
+  r:120,
+  g:50,
+  b:50,
 })
 
 onMounted(() => {
@@ -68,7 +68,7 @@ function processFrame() {
       const x = (i / 4) % width
       const y = Math.floor(i / 4 / width)
       context.beginPath()
-      context.arc(x, y, 5, 0, 2 * Math.PI)
+      context.arc(x, y, 1, 0, 2 * Math.PI)
       context.fillStyle = 'red'
       context.fill()
     }
@@ -79,14 +79,11 @@ function processFrame() {
 
 function isYellow(red, green, blue) {
   const threshold = states.b
-  return red > states.r && green > states.g && blue < threshold
+  return red > states.r && green < states.g && blue < threshold
 }
 
 function trackBall() {
   context = canvas.value.getContext('2d')
-  
-
-
 
   requestAnimationFrame(processFrame)
 }
