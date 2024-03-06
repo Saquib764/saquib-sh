@@ -1,11 +1,11 @@
 <template>
   <div style="display: flex; align-items: center; justify-content: center;">
     <connect />
-    <div class="menu-container">
+    <!-- <div class="menu-container">
       
     </div>
     <div class="menu-container" style="left: unset; right: 10px;">
-    </div>
+    </div> -->
     <div>
       <video
         ref="videoEl" autoplay playsinline
@@ -103,6 +103,8 @@ onMounted(async ()=>{
   states.hasStream = true
 
   // load glb model
+
+  model = await loadGlbModel('/models/sravani_glass.glb')
   const scene = useScene()
   const camera = useCamera()
   const renderer = useRenderer()
@@ -120,8 +122,6 @@ onMounted(async ()=>{
   canvas.style.height = `${HEIGHT / WIDTH * 100}vw`
   trolley.add(camera)
   scene.add(trolley)
-
-  model = await loadGlbModel('/models/sravani_glass.glb')
 
   window.addEventListener('deviceorientation', handleOrientation);
 
