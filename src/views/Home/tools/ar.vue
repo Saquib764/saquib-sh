@@ -9,7 +9,7 @@
     <div>
       <video
         ref="videoEl" autoplay playsinline
-        style="display: block; position: absolute; z-index: -1;"></video>
+        style="display: block; position: absolute; z-index: -1; width: 100vw;"></video>
       <three-js use-composer>
         <!-- <bokeh :focus="states.focus" :aperture="states.aperture" /> -->
         <point-light :x="states.x" :y="states.y" :z="states.z"/>
@@ -55,14 +55,15 @@ const videoEl = ref(null)
 
 const STORAGE_KEY = '2D_TO_3D'
 let model;
+let trolley;
 
 let mode = 'F32'
 let M = Math.pow(2, 32) 
 // const mode = 'U8'
 // const M = Math.pow(2, 8) - 1
 
-const HEIGHT = 512
-const WIDTH = 512
+let HEIGHT = 720
+let WIDTH = 1280
 
 watch(()=>[states.image_url, states.depth_url], (url)=> {
   let {image_url, depth_url} = states
@@ -98,18 +99,28 @@ onMounted(async ()=>{
   const localData = localStorage.getItem(STORAGE_KEY) || '{}'
   const {image_url, depth_url} = JSON.parse(localData)
   console.log('localData', {image_url, depth_url})
-  // stream = await getWebcamStream()
+  stream = await getWebcamStream()
   states.hasStream = true
 
   // load glb model
+  const scene = useScene()
   const camera = useCamera()
   const renderer = useRenderer()
+  const canvas = renderer.domElement
+  trolley = new THREE.Group()
 
+  camera.fov = 10
   camera.aspect = WIDTH / HEIGHT
-
   camera.updateProjectionMatrix()
   renderer.setPixelRatio(window.devicePixelRatio)
+
+  camera.position.set(0, 0.0, 50)
   resizeRenderer(WIDTH, HEIGHT)
+  canvas.style.width = '100vw'
+  canvas.style.height = `${HEIGHT / WIDTH * 100}vw`
+  trolley.add(camera)
+  scene.add(trolley)
+
   model = await loadGlbModel('/models/sravani_glass.glb')
 
   window.addEventListener('deviceorientation', handleOrientation);
@@ -122,9 +133,9 @@ function handleOrientation(event) {
   let gamma = event.gamma;
 
   console.log('orientation', alpha, beta, gamma)
-  model.rotation.x = -beta * (Math.PI / 180);
-  model.rotation.y = -gamma * (Math.PI / 180);
-  model.rotation.z = -alpha * (Math.PI / 180);
+  trolley.rotation.x = beta * (Math.PI / 180);
+  trolley.rotation.y = gamma * (Math.PI / 180);
+  trolley.rotation.z = alpha * (Math.PI / 180);
 }
 
 
@@ -202,13 +213,6 @@ async function loadGlbModel(url) {
   let scene = useScene()
   scene.add(group)
 
-  const camera = useCamera()
-
-  camera.fov = 10
-  camera.updateProjectionMatrix();
-  camera.position.set(0, 0.0, 50)
-
-  console.log('camera', camera, model)
   return group
 
 }
