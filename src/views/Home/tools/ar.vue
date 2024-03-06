@@ -1,6 +1,6 @@
 <template>
   <div style="display: flex; align-items: center; justify-content: center;">
-    <connect />
+    <!-- <connect /> -->
     <!-- <div class="menu-container">
       
     </div>
@@ -62,8 +62,8 @@ let M = Math.pow(2, 32)
 // const mode = 'U8'
 // const M = Math.pow(2, 8) - 1
 
-let HEIGHT = 720
-let WIDTH = 1280
+let HEIGHT = 512
+let WIDTH = 512
 
 watch(()=>[states.image_url, states.depth_url], (url)=> {
   let {image_url, depth_url} = states
