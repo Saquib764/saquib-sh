@@ -49,6 +49,9 @@ import Connect from '@/components/Footers/Connect.vue'
 
 const states = reactive({
   hasStream: false,
+  x: 5,
+  y: -10,
+  z: 20,
 })
 
 const videoEl = ref(null)
@@ -91,7 +94,6 @@ let stream = null
 let orbitController = null
 let transformController = null
 
-console.log('Aruco', Aruco)
 const detector = new Aruco.AR.Detector()
 const Posit = new Aruco.POS1.Posit(2 * 10, WIDTH)
 
@@ -102,14 +104,18 @@ onMounted(async ()=>{
   stream = await getWebcamStream()
   states.hasStream = true
 
-  // load glb model
+  setup_scene()
+})
 
+async function setup_scene() {
+  // load glb model
   model = await loadGlbModel('/models/sravani_glass.glb')
   const scene = useScene()
   const camera = useCamera()
   const renderer = useRenderer()
   const canvas = renderer.domElement
   trolley = new THREE.Group()
+  scene.add(trolley)
 
   camera.fov = 10
   camera.aspect = WIDTH / HEIGHT
@@ -121,11 +127,10 @@ onMounted(async ()=>{
   canvas.style.width = '100vw'
   canvas.style.height = `${HEIGHT / WIDTH * 100}vw`
   trolley.add(camera)
-  scene.add(trolley)
 
   window.addEventListener('deviceorientation', handleOrientation);
 
-})
+}
 
 function handleOrientation(event) {
   let alpha = event.alpha;
@@ -140,6 +145,7 @@ function handleOrientation(event) {
 
 
 function onFrame() {
+  return
   if(!states.hasStream) {
     return
   }
