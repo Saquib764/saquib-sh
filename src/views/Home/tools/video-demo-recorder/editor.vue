@@ -13,7 +13,27 @@
       >Save</v-btn> -->
     <div class="editor-holder">
       <div class="menu-holder">
-        Menu
+        <v-menu transition="scale-transition" location="end">
+          <template v-slot:activator="{ props }">
+            <div v-bind="props">Background
+            </div>
+          </template>
+
+          <!-- <v-list>
+            <v-list-item>Test</v-list-item>
+          </v-list> -->
+          <v-card>
+            <v-card-title>Background</v-card-title>
+            <div style="padding: 10px; width: 200px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; cursor: pointer;">
+              <div>1</div>
+              <div>2</div>
+              <div>3</div>
+              <div>4</div>
+            </div>
+          </v-card>
+        </v-menu>
+        <div>Layout</div>
+        <div>Zoom</div>
       </div>
       <div>
         <canvas ref="canvasEl" style="border: 1px solid black; width: 100%;"></canvas>
@@ -456,11 +476,20 @@ async function render() {
   &>div {
     &.menu-holder {
       width: 200px;
-      background: rgb(207, 225, 185);
-      padding: 10px;
-      border-radius: 8px;
       overflow: hidden;
       cursor: pointer;
+      font-size: 12px;
+      gap: 10px;
+      display: flex;
+      flex-direction: column;
+      aspect-ratio: unset;
+
+
+      &>div {
+        background: rgb(207, 225, 185);
+        padding: 10px;
+        border-radius: 8px;
+      }
     }
     border-radius: 8px;
     width: 100%;

@@ -18,7 +18,7 @@ export function useScene() {
   if(!state.scene) {
     // console.log( "creating new scene" )
     state.scene = new THREE.Scene()
-    state.scene.background = new THREE.Color( 0xf0f0f0 );
+    // state.scene.background = new THREE.Color( 0xf0f0f0 );
   }
   return state.scene
 }
@@ -31,7 +31,7 @@ export function useRenderer() {
         alpha: true,
         preserveDrawingBuffer: true,
     });
-    renderer.setClearColor("#ffffff")
+    // renderer.setClearColor("#ffffff")
     // renderer.shadowMap.enabled = true
     // renderer.shadowMap.type = THREE.PCFSoftShadowMap
     // renderer.shadowMapSoft = true

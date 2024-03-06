@@ -4098,6 +4098,11 @@ jiti@^1.19.1, jiti@^1.20.0:
   resolved "https://registry.yarnpkg.com/jiti/-/jiti-1.21.0.tgz#7c97f8fe045724e136a397f7340475244156105d"
   integrity sha512-gFqAIbuKyyso/3G2qhiO2OM6shY6EPP/R0+mkDbyspxKazh8BXDC5FiFsUjlczgdNz/vfra0da2y+aHrusLG/Q==
 
+js-aruco@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/js-aruco/-/js-aruco-0.1.0.tgz#1e31bd3ab4183f728a04204f3a27bc9341963ad5"
+  integrity sha512-M6YQ4qR+tSUBXaCV6HdlONdConen7aU3BWx0xiAs5Dgbnl49cGJW1P4x9g5NUTYRxlrC6mPRt1WUeb9OyxEEMA==
+
 js-tokens@^4.0.0:
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/js-tokens/-/js-tokens-4.0.0.tgz#19203fb59991df98e3a287050d4647cdeaf32499"

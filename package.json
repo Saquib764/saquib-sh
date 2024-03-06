@@ -22,6 +22,7 @@
     "ffmpeg.js": "^4.2.9003",
     "file-saver": "^2.0.5",
     "firebase": "^9.15.0",
+    "js-aruco": "^0.1.0",
     "jsfeat": "^0.0.8",
     "jszip": "^3.7.1",
     "localforage": "^1.10.0",
