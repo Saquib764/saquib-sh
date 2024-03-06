@@ -98,7 +98,7 @@ onMounted(async ()=>{
   const localData = localStorage.getItem(STORAGE_KEY) || '{}'
   const {image_url, depth_url} = JSON.parse(localData)
   console.log('localData', {image_url, depth_url})
-  stream = await getWebcamStream()
+  // stream = await getWebcamStream()
   states.hasStream = true
 
   // load glb model
@@ -112,9 +112,23 @@ onMounted(async ()=>{
   resizeRenderer(WIDTH, HEIGHT)
   model = await loadGlbModel('/models/sravani_glass.glb')
 
+  window.addEventListener('deviceorientation', handleOrientation);
+
 })
 
-async function onFrame() {
+function handleOrientation(event) {
+  let alpha = event.alpha;
+  let beta = event.beta;
+  let gamma = event.gamma;
+
+  console.log('orientation', alpha, beta, gamma)
+  model.rotation.x = -beta * (Math.PI / 180);
+  model.rotation.y = -gamma * (Math.PI / 180);
+  model.rotation.z = -alpha * (Math.PI / 180);
+}
+
+
+function onFrame() {
   if(!states.hasStream) {
     return
   }
@@ -145,7 +159,7 @@ async function onFrame() {
   // update camera position
   for(let r = 0; r<3; r++) {
     for(let c = 0; c<4; c++) {
-      rotationMatrix.elements[r * 4 + c] = pose.bestRotation[r][c]
+      rotationMatrix.elements[r * 4 + c] = rotationMatrix.elements[r * 4 + c]*0.5+ 0.5*pose.bestRotation[r][c]
     }
   }
 
