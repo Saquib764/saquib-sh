@@ -138,7 +138,7 @@ async function onFrame() {
   }
 
   let pose = Posit.pose(markers[0].corners)
-  // console.log('pose', markers[0].corners, pose.bestTranslation)
+  console.log('pose', markers[0].corners, pose.bestTranslation, pose.bestRotation)
 
   const camera = useCamera()
 
@@ -149,12 +149,12 @@ async function onFrame() {
     }
   }
 
-  // camera.position.x = pose.bestTranslation[0]
-  // camera.position.y = pose.bestTranslation[1]
-  // camera.position.z = pose.bestTranslation[2]
+  camera.position.x = pose.bestTranslation[0]
+  camera.position.y = pose.bestTranslation[1]
+  camera.position.z = pose.bestTranslation[2]
 
   // look at center
-  // camera.lookAt(0, 0, 0)
+  camera.lookAt(0, 0, 0)
   model.setRotationFromMatrix(rotationMatrix)
 
 }
@@ -165,7 +165,7 @@ async function getWebcamStream() {
     video: {
       width: { ideal: WIDTH },
       height: { ideal: HEIGHT },
-      facingMode: "user"
+      facingMode: "environment"
     }
   }
   const stream = await navigator.mediaDevices.getUserMedia(constraints)
