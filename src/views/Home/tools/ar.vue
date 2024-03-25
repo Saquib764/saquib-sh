@@ -138,9 +138,9 @@ function handleOrientation(event) {
   let gamma = event.gamma;
 
   console.log('orientation', alpha, beta, gamma)
-  model.rotation.x = -beta * (Math.PI / 180);
-  model.rotation.y = -gamma * (Math.PI / 180);
-  model.rotation.z = -alpha * (Math.PI / 180);
+  trolley.rotation.x = -beta * (Math.PI / 180);
+  trolley.rotation.y = -gamma * (Math.PI / 180);
+  trolley.rotation.z = -alpha * (Math.PI / 180);
 }
 
 

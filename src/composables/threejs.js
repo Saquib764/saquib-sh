@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+import { ArcballControls } from 'three/examples/jsm/controls/ArcballControls'
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls'
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
@@ -11,7 +12,17 @@ let state = {
   camera: null,
   orbitControl: null,
   transformControl: null,
+  arcballControl: null,
   composer: null
+}
+const states = [
+  reactive({
+    isReady: false,
+  }),
+]
+
+export function useThreeState(id=0) {
+  return states[id]
 }
 
 export function useScene() {
@@ -38,6 +49,7 @@ export function useRenderer() {
     // renderer.shadowMap.autoUpdate = true
     // renderer.shadowMap.needsUpdate = true
     state.renderer = renderer
+    states[0].isReady = true
   }
   return state.renderer
 }
@@ -79,9 +91,9 @@ export function resizeRenderer(width, height) {
 export function useCamera() {
   if(!state.camera) {
     const camera = new THREE.PerspectiveCamera(
-      160,
+      60,
       1.0,
-      1,
+      0.1,
       1000
     )
     camera.up.set(0, 1, 1);
@@ -120,6 +132,15 @@ export function useOrbitControl() {
   return state.orbitControl
 }
 
+export function useArcballControl() {
+  if(!state.arcballControl) {
+    const arcballControl = new ArcballControls(state.camera, state.renderer.domElement, state.scene)
+    arcballControl.update()
+    state.arcballControl = arcballControl
+  }
+  return state.arcballControl
+}
+
 export function useTransformControl() {
   if(!state.transformControl) {
     const transformControl = new TransformControls(state.camera, state.renderer.domElement)
@@ -133,5 +154,11 @@ export function useThree() {
     scene: useScene(),
     renderer: useRenderer(),
     camera: useCamera(),
+  }
+}
+
+export function refreshScene() {
+  if(state.arcballControl) {
+    state.arcballControl.update()
   }
 }
