@@ -31,7 +31,6 @@ import ArcballController from '@/components/ArcballController.vue';
 import BasicCube from '@/components/BasicCube.vue';
 import PointLight from '@/components/PointLight.vue';
 import { useRoute } from 'vue-router'
-import { supabase } from '@/supabase'
 import * as THREE from 'three'
 
 const route = useRoute()
