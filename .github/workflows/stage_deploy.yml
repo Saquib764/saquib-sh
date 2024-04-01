@@ -12,6 +12,8 @@ env:
   VITE_APP_NAME       : home
   mode                : development
   VITE_ENV            : production
+  VITE_SUPABASE_URL   : https://igfcuxsvikfhgwgbibix.supabase.co
+  VITE_SUPABASE_KEY   : eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlnZmN1eHN2aWtmaGd3Z2JpYml4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDI3NDI4NjgsImV4cCI6MjAxODMxODg2OH0.1Ess8xr7zatsNScPWt-6gFUNri3P6lCw9CJe2lNotAU
 
 jobs:
   deploy_stage:
