@@ -10,7 +10,7 @@
       <div class="row">
         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr;">
           <div v-for="model, i in states.models" :key="i">
-            <a :href="model.slug">
+            <a :href="`/3d-library/${model.slug}`">
               <v-img :src="model.preview" />
             </a>
           </div>
