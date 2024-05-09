@@ -19,6 +19,9 @@ npm install
 pnpm install
 ```
 
+## Firebase details
+Saquib764 -> project-sh-md
+
 ### Compiles and hot-reloads for development
 
 ```
