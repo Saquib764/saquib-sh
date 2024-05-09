@@ -90,10 +90,9 @@
         variant="tonal"
         >Clear</v-btn>
       <v-btn
-        href="/tools/video-demo-recorder/editor"
         :disabled="states.recordings.length == 0"
         variant="tonal"
-        >Merge</v-btn>
+        >Download</v-btn>
     </div>
   </div>
 </template>
