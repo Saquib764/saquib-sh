@@ -20,6 +20,7 @@ import { useStore } from 'vuex';
 const store = useStore();
 
 function onSnackbarChange(val) {
+  console.log(val)
   if(!val) {
     store.dispatch('houseKeeping/hideSnackbar')
   }

@@ -18,19 +18,6 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-// Copyright 2023 The MediaPipe Authors.
-
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
 
 import {
   PoseLandmarker,
@@ -43,13 +30,58 @@ import {
 let poseLandmarker = undefined;
 let handLandmarker = undefined;
 let faceLandmarker = undefined;
-let webcamRunning = false;
 let videoHeight;
 let videoWidth;
 
-// Before we can use PoseLandmarker class we must wait for it to finish
-// loading. Machine Learning models can be large and take a moment to
-// get everything needed to run.
+const states = reactive({
+  isDetectingFace: false,
+  isDetectingPose: false,
+  isDetectingHands: true,
+  pointMove: true,
+  rectangleMove: false
+})
+
+const balls = [{
+  id: '0',
+  x: 0.5,
+  y: 0.5,
+  r: 0.1,
+}, {
+  id: '1',
+  x: 0.25,
+  y: 0.5,
+  r: 0.1,
+}, {
+  id: '2',
+  x: 0.3,
+  y: 0.3,
+  r: 0.1,
+}, {
+  id: '3',
+  x: 0.2,
+  y: 0.3,
+  r: 0.1,
+}, {
+  id: '4',
+  x: 0.8,
+  y: 0.7,
+  r: 0.1,
+}]
+
+const rect = [{
+  x: 0.2,
+  y: 0.2,
+}, {
+  x: 0.2,
+  y: 0.6,
+}, {
+  x: 0.8,
+  y: 0.2,
+}, {
+  x: 0.8,
+  y: 0.6,
+}]
+
 const createPoseLandmarker = async () => {
   const vision = await FilesetResolver.forVisionTasks(
     "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm"
@@ -82,14 +114,6 @@ const createPoseLandmarker = async () => {
   });
 };
 
-// In this demo, we have put all our clickable images in divs with the
-// CSS class 'detectionOnClick'. Lets get all the elements that have
-// this class.
-
-/********************************************************************
-// Demo 2: Continuously grab image from webcam stream and detect it.
-********************************************************************/
-
 const videoEl = ref("");
 const canvasEl = ref("");
 let canvasCtx;
@@ -107,6 +131,14 @@ for(let i=0; i<33; i++) {
 function enableCam(event) {
   if (!poseLandmarker) {
     console.log("Wait! poseLandmaker not loaded yet.");
+    return;
+  }
+  if( !handLandmarker) {
+    console.log("Wait! handLandmarker not loaded yet.");
+    return;
+  }
+  if( !faceLandmarker) {
+    console.log("Wait! faceLandmarker not loaded yet.");
     return;
   }
 
@@ -137,101 +169,210 @@ function enableCam(event) {
   });
 }
 
-let lastVideoTime = -1;
+function dist(a, b) {
+  return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2 );
+}
+
+function detectHands(video, startTimeMs) {
+  let results = handLandmarker.detectForVideo(video, startTimeMs);
+  const selected = []
+  if(results.landmarks.length === 0) {
+    return [results, selected]
+  }
+  if (results.landmarks) {
+    for (const landmarks of results.landmarks) {
+      let d = dist(landmarks[4], landmarks[8]) / dist(landmarks[1], landmarks[2]);
+      if(d > 1) {
+        continue
+      }
+      selected.push(landmarks);
+      // drawingUtils.drawConnectors(landmarks, HandLandmarker.HAND_CONNECTIONS);
+      // drawingUtils.drawLandmarks(landmarks, { color: "#FF0000", lineWidth: 2 });
+    }
+  }
+  return [results, selected]
+}
+
+function detectBody(video, startTimeMs) {
+  poseLandmarker.detectForVideo(video, startTimeMs, (result) => {
+    canvasCtx.save();
+
+    let d = 0.3
+    for (const i in result.landmarks) {
+      let landmark = result.landmarks[i];
+      currentLandmarks = currentLandmarks.map((l, i)=> {
+        return {
+          x: l.x * (1-d) + landmark[i].x * d,
+          y: l.y * (1-d) + landmark[i].y * d,
+          z: l.z * (1-d) + landmark[i].z * d,
+        }
+      });
+
+      drawingUtils.drawLandmarks(currentLandmarks, {
+        radius: (data) => DrawingUtils.lerp(data.from.z, -0.15, 0.1, 5, 1)
+      });
+      drawingUtils.drawConnectors(currentLandmarks, PoseLandmarker.POSE_CONNECTIONS);
+    }
+    canvasCtx.restore();
+  });
+
+}
+
+function detectFace(video, startTimeMs) {
+  let results = faceLandmarker.detectForVideo(video, startTimeMs);
+  
+  if (results.faceLandmarks) {
+    for (const landmarks of results.faceLandmarks) {
+      drawingUtils.drawConnectors(
+        landmarks,
+        FaceLandmarker.FACE_LANDMARKS_TESSELATION,
+        { color: "#C0C0C070", lineWidth: 1 }
+      );
+      drawingUtils.drawConnectors(
+        landmarks,
+        FaceLandmarker.FACE_LANDMARKS_RIGHT_EYE,
+        { color: "#FF3030" }
+      );
+      drawingUtils.drawConnectors(
+        landmarks,
+        FaceLandmarker.FACE_LANDMARKS_RIGHT_EYEBROW,
+        { color: "#FF3030" }
+      );
+      drawingUtils.drawConnectors(
+        landmarks,
+        FaceLandmarker.FACE_LANDMARKS_LEFT_EYE,
+        { color: "#30FF30" }
+      );
+      drawingUtils.drawConnectors(
+        landmarks,
+        FaceLandmarker.FACE_LANDMARKS_LEFT_EYEBROW,
+        { color: "#30FF30" }
+      );
+      drawingUtils.drawConnectors(
+        landmarks,
+        FaceLandmarker.FACE_LANDMARKS_FACE_OVAL,
+        { color: "#E0E0E0" }
+      );
+      drawingUtils.drawConnectors(
+        landmarks,
+        FaceLandmarker.FACE_LANDMARKS_LIPS,
+        { color: "#E0E0E0" }
+      );
+      drawingUtils.drawConnectors(
+        landmarks,
+        FaceLandmarker.FACE_LANDMARKS_RIGHT_IRIS,
+        { color: "#FF3030" }
+      );
+      drawingUtils.drawConnectors(
+        landmarks,
+        FaceLandmarker.FACE_LANDMARKS_LEFT_IRIS,
+        { color: "#30FF30" }
+      );
+    }
+  }
+}
+
 async function predictWebcam() {
   let video = videoEl.value;
   
   let startTimeMs = performance.now();
-  if (lastVideoTime !== video.currentTime) {
-    lastVideoTime = video.currentTime;
-    let results = handLandmarker.detectForVideo(video, startTimeMs);
-    
+  canvasCtx.clearRect(0, 0, canvasEl.value.width, canvasEl.value.height);
+  
+  let selected = []
+  let hands = []
+  if(states.isDetectingHands){
+    let ret = detectHands(video, startTimeMs);
+    selected = ret[1];
+    hands = ret[0];
+  }
+  
+  if(states.isDetectingPose){
+    detectBody(video, startTimeMs);
+  }
 
-    canvasCtx.clearRect(0, 0, canvasEl.value.width, canvasEl.value.height);
-    canvasCtx.save();
-    
-    if (results.landmarks) {
-      for (const landmarks of results.landmarks) {
-        drawingUtils.drawConnectors(landmarks, HandLandmarker.HAND_CONNECTIONS);
-        drawingUtils.drawLandmarks(landmarks, { color: "#FF0000", lineWidth: 2 });
+  if(states.isDetectingFace){
+    detectFace(video, startTimeMs);
+  }
+
+  if(states.pointMove) {
+    let used = []
+    for(let ball of balls) {
+      // draw filled circle
+      let isSelectedIndex = selected.findIndex((landmarks, i) => {
+        let pt = {
+          x: (landmarks[4].x + landmarks[8].x) * 0.5,
+          y: (landmarks[4].y + landmarks[8].y) * 0.5,
+        }
+        let d = dist(pt, ball)
+        return d < ball.r * 0.4 && !used.includes(i)
+      });
+      let isSelected = isSelectedIndex !== -1 ? selected[isSelectedIndex] : null;
+      if(isSelected) {
+        ball.x = (isSelected[4].x + isSelected[8].x) * 0.5;
+        ball.y = (isSelected[4].y + isSelected[8].y) * 0.5;
+        used.push(isSelectedIndex);
       }
-    }
-    canvasCtx.restore();
+      canvasCtx.beginPath();
+      canvasCtx.fillStyle = '#6c5ce7';
+      if(isSelected) {
+        // stroke
+        canvasCtx.arc(
+          ball.x * videoWidth,
+          ball.y * videoHeight,
+          ball.r * videoWidth * 0.4 - 0.02 * videoWidth * 0.5,
+          0, 2 * Math.PI);
 
-    poseLandmarker.detectForVideo(video, startTimeMs, (result) => {
-      canvasCtx.save();
+        canvasCtx.lineWidth = parseInt(0.02 * videoWidth);
+        canvasCtx.strokeStyle = '#000000';
+        canvasCtx.stroke();
 
-      let d = 0.3
-      for (const i in result.landmarks) {
-        let landmark = result.landmarks[i];
-        currentLandmarks = currentLandmarks.map((l, i)=> {
-          return {
-            x: l.x * (1-d) + landmark[i].x * d,
-            y: l.y * (1-d) + landmark[i].y * d,
-            z: l.z * (1-d) + landmark[i].z * d,
-          }
-        });
-
-        drawingUtils.drawLandmarks(currentLandmarks, {
-          radius: (data) => DrawingUtils.lerp(data.from.z, -0.15, 0.1, 5, 1)
-        });
-        drawingUtils.drawConnectors(currentLandmarks, PoseLandmarker.POSE_CONNECTIONS);
+      }else{
+        canvasCtx.arc(
+          ball.x * videoWidth,
+          ball.y * videoHeight,
+          ball.r * videoWidth * 0.4,
+          0, 2 * Math.PI);
       }
-      canvasCtx.restore();
-    });
-
-    results = faceLandmarker.detectForVideo(video, startTimeMs);
-    
-    if (results.faceLandmarks) {
-      for (const landmarks of results.faceLandmarks) {
-        drawingUtils.drawConnectors(
-          landmarks,
-          FaceLandmarker.FACE_LANDMARKS_TESSELATION,
-          { color: "#C0C0C070", lineWidth: 1 }
-        );
-        drawingUtils.drawConnectors(
-          landmarks,
-          FaceLandmarker.FACE_LANDMARKS_RIGHT_EYE,
-          { color: "#FF3030" }
-        );
-        drawingUtils.drawConnectors(
-          landmarks,
-          FaceLandmarker.FACE_LANDMARKS_RIGHT_EYEBROW,
-          { color: "#FF3030" }
-        );
-        drawingUtils.drawConnectors(
-          landmarks,
-          FaceLandmarker.FACE_LANDMARKS_LEFT_EYE,
-          { color: "#30FF30" }
-        );
-        drawingUtils.drawConnectors(
-          landmarks,
-          FaceLandmarker.FACE_LANDMARKS_LEFT_EYEBROW,
-          { color: "#30FF30" }
-        );
-        drawingUtils.drawConnectors(
-          landmarks,
-          FaceLandmarker.FACE_LANDMARKS_FACE_OVAL,
-          { color: "#E0E0E0" }
-        );
-        drawingUtils.drawConnectors(
-          landmarks,
-          FaceLandmarker.FACE_LANDMARKS_LIPS,
-          { color: "#E0E0E0" }
-        );
-        drawingUtils.drawConnectors(
-          landmarks,
-          FaceLandmarker.FACE_LANDMARKS_RIGHT_IRIS,
-          { color: "#FF3030" }
-        );
-        drawingUtils.drawConnectors(
-          landmarks,
-          FaceLandmarker.FACE_LANDMARKS_LEFT_IRIS,
-          { color: "#30FF30" }
-        );
-      }
+      canvasCtx.fill();
+      canvasCtx.closePath();
     }
   }
+
+  // create rectangle line
+  if(states.rectangleMove) {
+    let rectMap = [{
+      start: 0, end: 1
+    }, {
+      start: 1, end: 3
+    }, {
+      start: 3, end: 2
+    }, {
+      start: 2, end: 0
+    }]
+
+    let handIndex = 0
+    if(hands.landmarks[0]) {
+      let ld = hands.landmarks[0]
+      if( dist(ld[8], rect[0]) > dist(ld[8], rect[2])) {
+        handIndex = 2
+      }
+      rect[handIndex].x = ld[8].x
+      rect[handIndex].y = ld[8].y
+      rect[handIndex + 1].x = ld[4].x
+      rect[handIndex + 1].y = ld[4].y
+    }
+    if(hands.landmarks[1]) {
+      let ld = hands.landmarks[1]
+      handIndex = Math.abs(handIndex - 2)
+      rect[handIndex].x = ld[8].x
+      rect[handIndex].y = ld[8].y
+      rect[handIndex + 1].x = ld[4].x
+      rect[handIndex + 1].y = ld[4].y
+    }
+    drawingUtils.drawConnectors(rect, rectMap, { color: "#00FF00", lineWidth: 2 });
+    drawingUtils.drawLandmarks(rect, { color: "#6c5ce7", lineWidth: 2 });
+  }
+
 
   // Call this function again to keep predicting when the browser is ready.
   requestAnimationFrame(predictWebcam);
