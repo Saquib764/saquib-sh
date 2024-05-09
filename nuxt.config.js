@@ -2,11 +2,11 @@
 
 const APPS = {
   'home': 'views/Home',
-  'video-record': 'views/VideoRecord',
+  'product-demo': 'views/ProductDemo',
 }
 const SITEMAP_BASE = {
   'home': 'https://saquib.sh',
-  'video-record': 'https://saquib.sh',
+  'product-demo': 'https://productdemo.tech',
 }
 
 export default defineNuxtConfig({

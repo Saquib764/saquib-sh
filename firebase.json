@@ -9,7 +9,7 @@
     ]
   }, {
     "public": ".output/public",
-    "site": "video-recorder",
+    "site": "product-demo",
     "ignore": [
       "firebase.json",
       "**/.*",
