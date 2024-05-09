@@ -17,7 +17,7 @@
     ]
   }, {
     "public": ".output/public",
-    "site": "productshoot3d",
+    "site": "product-shoot3d",
     "ignore": [
       "firebase.json",
       "**/.*",
