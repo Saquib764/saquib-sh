@@ -1,0 +1,44 @@
+name: Deploy to productshoot3d.com
+
+on:
+  push:
+    tags:
+      - product-shoot3d-v*
+    
+env:
+  VITE_BASE_API       : https://get-published-nf5wy45qga-uc.a.run.app
+  VITE_TITLE          : Zust AI - Dreamlike product photos
+  VITE_DESCRIPTION    : Generate stunning product photos using AI
+  VITE_KEYWORDS       : Product photography, AI, deep learning, stable diffusion
+  VITE_APP_NAME       : product-shoot3d
+  mode                : development
+  VITE_ENV            : production
+  VITE_SUPABASE_URL   : https://igfcuxsvikfhgwgbibix.supabase.co
+  VITE_SUPABASE_KEY   : eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlnZmN1eHN2aWtmaGd3Z2JpYml4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDI3NDI4NjgsImV4cCI6MjAxODMxODg2OH0.1Ess8xr7zatsNScPWt-6gFUNri3P6lCw9CJe2lNotAU
+
+jobs:
+  deploy_stage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install node
+        uses: actions/setup-node@v1
+        with:
+          node-version: 18
+
+      - name: Install Yarn
+        run: npm install yarn@latest -g
+
+      - name: Install Firebase Tools
+        run: npm install firebase-tools -g
+        
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Run build
+        run: yarn build
+
+      - name: Run deploy
+        run: firebase deploy --project saquib-alam-md --only hosting:product-shoot3d --token ${{secrets.FIREBASE_TOKEN}} 

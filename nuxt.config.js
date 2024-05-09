@@ -3,10 +3,14 @@
 const APPS = {
   'home': 'views/Home',
   'product-demo': 'views/ProductDemo',
+  'product-shoot3d': 'views/ProductShoot3D',
+  'motiondub': 'views/MotionDub',
 }
 const SITEMAP_BASE = {
   'home': 'https://saquib.sh',
   'product-demo': 'https://productdemo.tech',
+  'product-shoot3d': 'https://productshoot3d.com',
+  'motiondub': 'https://motiondub.com',
 }
 
 export default defineNuxtConfig({

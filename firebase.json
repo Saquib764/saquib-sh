@@ -15,5 +15,21 @@
       "**/.*",
       "**/node_modules/**"
     ]
+  }, {
+    "public": ".output/public",
+    "site": "productshoot3d",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ]
+  }, {
+    "public": ".output/public",
+    "site": "motion-dub",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ]
   }]
 }
